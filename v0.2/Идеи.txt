@@ -1,0 +1,37 @@
+Dice Variety: Introduce "quirky" dice (e.g., a die with uneven faces like 1/1/3/8) to reward creative builds.
+
+
+Risk-Taker’s Gambit: Rerolling a die adds +2 to its result, but you can no longer reroll that die for the rest of the battle.
+Shard of Infinity: When a die rolls its maximum value, duplicate its effect (great for big dice like d10s)
+Void Sigil: Every 3 broken shield, deal 5 damage to all enemies.
+Enemies take 1 damage for every unique rune type you activate in a round (encourages hybrid builds).
+Merchant’s Bargain: Shops sell items for 30% less, but enemies drop 40% less gold.
+
+
+Poison Rune: Apply X poison (damage-over-time) stacks.
+Leech Rune: Heal for X% of damage dealt.
+Critical Rune: Doubles numbers of other rolls
+Thorns Rune: When attacked, reflect 2X damage (scales with shield value).
+Gold Rune: Gain X gold when this face is used (non-combat utility).
+
+
+Burn Enchant: All attack faces also apply 1 burn (scales with fire-themed artifacts).
+Spray Enchant: Effects hit all enemies, but power is the lowest face number.
+Chaining Enchant: Attacks bounce to 1 additional enemy behind at 50% power.
+Overcharge Enchant: +2 to all face numbers, but take 1 damage when rolled.
+Vampiric Enchant: Healing effects also apply shields for 20% of the value.
+
+
+Poison: Take X damage at the start of each round (stacks).
+Burn: Take X damage when using attacks (reduces healing by 50%).
+Freeze: Skip next action (delays enemy turns).
+Weakness: Next damage taken is 50% more.
+Strength: Gain +1 to all face numbers each round (stacks until combat ends).
+
+
+Heavy Upgrade: Replace half low-value faces with higher numbers (e.g., turn 1/2/3/4 into 3/4/5/6).
+Cursed Mutation: Double one face’s value, but set another to 0.
+Duplication Glyph: One face triggers twice (great for shields or multi-hit runes).
+
+
+Forge room: Destroy a rune to add its effect permanently to one face.
