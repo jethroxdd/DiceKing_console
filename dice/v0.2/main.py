@@ -61,7 +61,7 @@ class Workshop:
             print(f"Gold: {self.player.gold}")
             print("Select a die to modify:")
             for i, die in enumerate(self.player.dice):
-                print(f"{i+1}. {die} | Faces: {', '.join(die.runes)}")
+                print(f"{i+1}. {die} | Faces: {', '.join([Rune.TYPES[r]['symbol'] for r in die.runes])}")
                 
             choice = input("\nChoose die (1-8) or (q)uit: ")
             if choice.lower() == 'q':
@@ -101,9 +101,9 @@ class Workshop:
     def attach_rune(self, die):
         print("\nAvailable Runes:")
         for i, rune in enumerate(self.player.runes):
-            print(f"{i+1}. {rune}")
-            
-        face_idx = int(input("Which face (1-{die.sides})? ")) - 1
+            print(f"{i+1}. {Rune.TYPES[rune]['symbol']}")
+        print(f"{die} | Faces: {', '.join([Rune.TYPES[r]['symbol'] for r in die.runes])}")
+        face_idx = int(input(f"Which face (1-{die.sides})? ")) - 1
         rune_idx = int(input("Which rune? ")) - 1
         
         if 0 <= face_idx < die.sides and 0 <= rune_idx < len(self.player.runes):
@@ -244,34 +244,36 @@ class BattleSystem:
         self.player = player
         self.enemy = enemy
         
-    def process_roll(self, source, target, value, rune_type):
+    def process_roll(self, source, target, die, value, rune_type):
         effect = {}
         rune = Rune.TYPES[rune_type]
         
         potency = value
-        
-        # Handle enchantments
-        if source == self.player:
-            die = self.find_die_with_value(value)
-            if die and die.enchantment:
-                potency = self.apply_enchantment_effect(die.enchantment, value)
-        
+
+        # Apply enchantment effects if the die has one
+        if source == self.player and die.enchantment:
+            potency = self.apply_enchantment_effect(die.enchantment, value)
+
         if rune_type == 'attack':
-            effect['damage'] = value if rune['scaling'] else 1
+            damage = potency if rune['scaling'] else 1
+            effect['damage'] = effect.get('damage', 0) + damage
         elif rune_type == 'shield':
-            source.shield += value if rune['scaling'] else 3
-            effect['shield'] = value
+            shield_amount = potency if rune['scaling'] else 3
+            source.shield += shield_amount
+            effect['shield'] = effect.get('shield', 0) + shield_amount
         elif rune_type == 'heal':
-            source.health = min(source.health + (value if rune['scaling'] else 2), source.max_health)
-            effect['heal'] = value
+            heal_amount = potency if rune['scaling'] else 2
+            source.health = min(source.health + heal_amount, source.max_health)
+            effect['heal'] = heal_amount
         elif rune_type == 'crit':
-            effect['crit'] = 1
+            effect['crit'] = effect.get('crit', 0) + 1
         elif rune_type == 'burn':
-            target.add_status('burn', 2, value)
-            effect['burn'] = value
+            target.add_status('burn', 2, potency)
+            effect['burn'] = potency
         elif rune_type == 'poison':
-            target.add_status('poison', 3, value//2)
-            
+            target.add_status('poison', 3, potency)
+            effect['poison'] = potency
+
         return effect
     
     def find_die_with_value(self, value):
@@ -301,7 +303,7 @@ class BattleSystem:
                 print(f"{'Enemy' if entity==self.enemy else 'Player'} poisoned for {dmg}!")
             
             if damage > 0:
-                entity.health -= damage
+                entity.take_damage(damage)
                 
     def show_statuses(self):
         for name, entity in [('Player', self.player), ('Enemy', self.enemy)]:
@@ -315,23 +317,29 @@ class BattleSystem:
         self.apply_status_damage()
         self.show_statuses()
         
-        # Player turn
+        # Player's turn
         print("\nPlayer's roll:")
-        player_effects = {'damage':0, 'crit':0}
-        for i, die in enumerate(self.player.dice):
+        player_effects = {'damage': 0, 'crit': 0}
+        for die in self.player.dice:
             val, rune = die.roll()
-            print(f"Die {i+1}: {val} {Rune.TYPES[rune]['symbol']}")
-            effects = self.process_roll(self.player, self.enemy, val, rune)
-            player_effects['damage'] += effects.get('damage',0)
-            player_effects['crit'] += effects.get('crit',0)
+            print(f"{die}\t: {val} {Rune.TYPES[rune]['symbol']}")
+            effects = self.process_roll(self.player, self.enemy, die, val, rune)
+            player_effects['damage'] += effects.get('damage', 0)
+            player_effects['crit'] += effects.get('crit', 0)
             
         # Reroll logic
         while self.player.rerolls > 0:
             if input("\nReroll? (y/n): ").lower() == 'y':
-                die_idx = int(input(f"Which die (1-{len(self.player.dice)}): ")) - 1
-                die = self.player.dice[die_idx]
+                try:
+                    die_idx = int(input(f"Which die (1-{len(self.player.dice)}): ")) - 1
+                    die = self.player.dice[die_idx]
+                except:
+                    print("Invalid selection!")
                 val, rune = die.roll()
                 print(f"New roll: {val} {Rune.TYPES[rune]['symbol']}")
+                effects = self.process_roll(self.player, self.enemy, die, val, rune)
+                player_effects['damage'] += effects.get('damage',0)
+                player_effects['crit'] += effects.get('crit',0)
                 self.player.rerolls -= 1
             else:
                 break
@@ -343,18 +351,18 @@ class BattleSystem:
         for die in self.enemy.dice:
             val, rune = die.roll()
             print(f"Enemy die: {val} {Rune.TYPES[rune]['symbol']}")
-            effects = self.process_roll(self.enemy, self.player, val, rune)
+            effects = self.process_roll(self.enemy, self.player, die, val, rune)
             enemy_effects['damage'] += effects.get('damage',0)
             enemy_effects['crit'] += effects.get('crit',0)
             
         # Resolve combat
         player_dmg = player_effects['damage']
-        if random.random() < player_effects['crit'] * 0.25:
+        if player_effects['crit']:
             player_dmg *= 2
             print("\nCritical hit!")
             
         enemy_dmg = enemy_effects['damage']
-        if random.random() < enemy_effects['crit'] * 0.25:
+        if enemy_effects['crit']:
             enemy_dmg *= 2
             print("Enemy critical hit!")
             
@@ -375,54 +383,62 @@ class Game:
         self.player = player
         self.room_count = 0
         self.completed_rooms = 0
+        self.difficulty = 0
 
     def generate_room_options(self):
-        if self.completed_rooms >= 10:
-            return [BossRoom()]
+        if self.completed_rooms >= 50:
+            return [BossRoom(int(self.difficulty*1.5))]
         
         room_types = []
         weights = [4, 3, 3, 2, 2]  # Enemy, Chest, Shop, Event
         for _ in range(2):
             rt = random.choices(['enemy', 'chest', 'shop', 'event', 'workshop'], weights, k=1)[0]
             room_types.append(rt)
-        return [Room.create(rt) for rt in room_types]
+        return [Room.create(rt, self.difficulty) for rt in room_types]
 
     def play(self):
         while self.player.is_alive():
-            if self.completed_rooms >= 10:
-                final_boss = BossRoom()
-                final_boss.enter(self.player)
+            options = self.generate_room_options()
+            while True:
+                try:
+                    print(f"\n=== Progress: {self.completed_rooms}/50 rooms ===")
+                    
+                    print("\nChoose your next room:")
+                    for i, room in enumerate(options):
+                        print(f"{i+1}. {room.description}")
+            
+            
+                    choice = int(input("Enter choice: ")) - 1
+                    if choice < 0:
+                        choice = ""
+                    selected_room = options[choice]
+                    break
+                except:
+                    print("Invalid selection!")
+            success = selected_room.enter(self.player)
+            
+            if self.completed_rooms >= 50:
                 if self.player.is_alive():
                     print("\n=== CONGRATULATIONS! You defeated the Final Boss! ===")
                 break
-            
-            print(f"\n=== Progress: {self.completed_rooms}/10 rooms ===")
-            options = self.generate_room_options()
-            
-            print("\nChoose your next room:")
-            for i, room in enumerate(options):
-                print(f"{i+1}. {room.description}")
-            
-            choice = int(input("Enter choice: ")) - 1
-            selected_room = options[choice]
-            success = selected_room.enter(self.player)
             
             if not success:
                 print("\n=== GAME OVER ===")
                 return
             
             if isinstance(selected_room, CombatRoom):
-                self.player.gold += random.randint(10, 20)
-                print(f"\nYou gained {self.player.gold} gold!")
+                self.player.gold += random.randint(int(10*(self.difficulty**(0.5))), int(20*(self.difficulty)**(0.5)))
+                print(f"\nYou gained {self.player.gold} gold!") 
+                self.difficulty += 1
             
-            self.completed_rooms += 1    
+            self.completed_rooms += 1
             self.player.health = min(self.player.health + 2, self.player.max_health)
 
 class Room:
     @staticmethod
-    def create(room_type):
+    def create(room_type, difficulty=0):
         if room_type == 'enemy':
-            return CombatRoom()
+            return CombatRoom(difficulty)
         elif room_type == 'chest':
             return ChestRoom()
         elif room_type == 'shop':
@@ -477,15 +493,21 @@ class ChestRoom(Room):
         reward = random.choices(['die', 'rune', 'artifact'], weights=(1, 3, 1), k=1)[0]
         
         if reward == 'die':
-            sides = random.choice([4, 6, 6, 8])
+            sides = random.choices([4, 6, 8, 10, 12, 20], weights=(6, 5, 4, 3, 2, 1), k=1)[0]
             new_die = Die(sides, ['empty']*sides)
             if player.add_die(new_die):
                 print(f"Found an empty d{sides} die!")
+            else:
+                print("Couldn't carry die. Received 30 gold instead.")
+                player.gold += 10
         
         elif reward == 'rune':
-            rune_type = random.choice(['shield', 'heal', 'crit', 'poison'])
+            rune_type = random.choice(['attack', 'shield', 'heal', 'crit', 'poison'])
             if player.add_rune(rune_type):
-                print(f"Found a {rune_type} rune!")
+                print(f"Found a {Rune.TYPES[rune_type]["symbol"]} rune!")
+            else:
+                print("Couldn't carry rune. Received 15 gold instead.")
+                player.gold += 10
         
         elif reward == 'artifact':
             artifact = Artifact("Magic Charm", "rerolls")
@@ -513,16 +535,24 @@ class ShopRoom(Room):
             new_die = Die(4, ['attack']*4)
             if player.add_die(new_die):
                 print("Purchased d4 attack die!")
-        
+            else:
+                print("Cannot carry more dice! Refunding gold.")
+                player.gold += 50
         elif choice == '2' and player.gold >= 10:
             player.gold -= 10
             if player.add_rune('poison'):
-                print("Purchased poison rune!")
+                print(f"Purchased {Rune.TYPES['poison']['symbol']} rune!")
+            else:
+                print("Cannot carry more runes! Refunding gold.")
+                player.gold += 10
         
         elif choice == '3' and player.gold >= 10:
             player.gold -= 10
             if player.add_rune('crit'):
-                print("Purchased crit rune!")
+                print(f"Purchased {Rune.TYPES['crit']['symbol']} rune!")
+            else:
+                print("Cannot carry more runes! Refunding gold.")
+                player.gold += 10
         
         return True
 
@@ -547,8 +577,8 @@ class EventRoom(Room):
         return True
 
 class BossRoom(CombatRoom):
-    def __init__(self):
-        super().__init__(difficulty_mod=5)
+    def __init__(self, difficulty_mod=5):
+        super().__init__(difficulty_mod)
 
     @property
     def description(self):
@@ -556,8 +586,7 @@ class BossRoom(CombatRoom):
 
     def enter(self, player):
         print("\n=== FINAL BOSS APPEARS ===")
-        boss = Enemy(10)
-        boss.health = 100
+        boss = Enemy(15)
         boss.dice.append(Die(10, ['poison']*5 + ['crit']*5))
         battle = BattleSystem(player, boss)
         
