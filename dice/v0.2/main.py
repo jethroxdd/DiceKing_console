@@ -1,4 +1,7 @@
 import random
+import enum
+from rune import Runes
+import effect
 from color import *
 
 class Die:
@@ -15,9 +18,9 @@ class Die:
         return self.base_sides + self.upgrades
     
     def roll(self):
-        self.current_value = random.randint(1, self.base_sides) + self.upgrades
-        self.current_rune = self.runes[self.current_value - 1 - self.upgrades]
-        return self.current_value, self.current_rune
+        self.current_value = random.randint(1, self.base_sides)
+        self.current_rune = self.runes[self.current_value - 1]
+        return self.current_value + self.upgrades, self.current_rune
     
     def upgrade(self):
         self.upgrades += 1
@@ -26,42 +29,40 @@ class Die:
         self.base_sides = new_sides
         # Fill new faces with default attack runes
         while len(self.runes) < new_sides:
-            self.runes.append('empty')
+            self.runes.append(Runes.empty.value)
             
-    def enchant(self, effect):
-        self.enchantment = effect
+    def enchant(self, enchantment):
+        self.enchantment = enchantment
         
-    def replace_rune(self, face_idx, new_rune):
-        if 0 <= face_idx < len(self.runes):
-            old_rune = self.runes[face_idx]
-            self.runes[face_idx] = new_rune
+    def replace_rune(self, face_id, new_rune):
+        if 0 <= face_id < len(self.runes):
+            old_rune = self.runes[face_id]
+            self.runes[face_id] = new_rune
             return old_rune
+    
+    def remove_rune(self, face_id):
+        if 0 <= face_id < len(self.runes):
+            rune = self.runes[face_id]
+            self.runes[face_id] = Runes.empty.value
+            return rune
 
     def __repr__(self):
         return f"d{self.base_sides}{f"+{self.upgrades}" if self.upgrades else ""}"
 
-class Rune:
-    TYPES = {
-        'empty': {'symbol': f'{WHITE}empty{RESET}', 'scaling': False},
-        'attack': {'symbol': f'{RED}attack{RESET}', 'scaling': True},
-        'shield': {'symbol': f'{BLUE}shield{RESET}', 'scaling': True},
-        'heal': {'symbol': f'{GREEN}heal{RESET}', 'scaling': True},
-        'crit': {'symbol': f'{YELLOW}crit{RESET}', 'scaling': False},
-        'burn': {'symbol': f'{RED}burn{RESET}', 'scaling': True},
-        'poison': {'symbol': f'{MAGENTA}poison{RESET}', 'scaling': True}
-    }
-
 class Workshop:
     def __init__(self, player):
         self.player = player
-        
+    
     def modify_dice(self):
         while True:
             print("\n=== Dice Workshop ===")
             print(f"Gold: {self.player.gold}")
-            print("Select a die to modify:")
+            print("\nAvailable Runes:")
+            for i, rune in enumerate(self.player.runes):
+                print(f"{i+1}. {rune.symbol}")
+            print("\nSelect a die to modify:")
             for i, die in enumerate(self.player.dice):
-                print(f"{i+1}. {die} | Faces: {', '.join([Rune.TYPES[r]['symbol'] for r in die.runes])}")
+                print(f"{i+1}. {die} | Faces: {', '.join([rune.symbol for rune in die.runes])}")
                 
             choice = input("\nChoose die (1-8) or (q)uit: ")
             if choice.lower() == 'q':
@@ -78,22 +79,31 @@ class Workshop:
         while True:
             print(f"\nSelected: {die}")
             print("1. Attach Rune to Face")
-            print("2. Upgrade Die (+1 to all faces)")
-            print("3. Mutate Die (increase die type)")
-            print("4. Apply Enchantment")
-            print("5. Back")
+            print("2. Take off Rune from Face")
+            print("3. Upgrade Die (+1 to all faces)")
+            print("4. Mutate Die (increase die type)")
+            print("5. Delete dice")
+            print("6. Delete rune")
+            # print("4. Apply Enchantment")
+            print("q. Back")
             
             choice = input("Choose modification: ")
             
             if choice == '1':
                 self.attach_rune(die)
             elif choice == '2':
-                self.upgrade_die(die)
+                self.remove_rune(die)
             elif choice == '3':
-                self.mutate_die(die)
+                self.upgrade_die(die)
             elif choice == '4':
-                self.apply_enchantment(die)
+                self.mutate_die(die)
             elif choice == '5':
+                self.del_dice(die)
+            elif choice == '6':
+                self.del_dice(die)
+            # elif choice == '4':
+                # self.apply_enchantment(die)
+            elif choice == 'q':
                 break
             else:
                 print("Invalid choice!")
@@ -101,23 +111,35 @@ class Workshop:
     def attach_rune(self, die):
         print("\nAvailable Runes:")
         for i, rune in enumerate(self.player.runes):
-            print(f"{i+1}. {Rune.TYPES[rune]['symbol']}")
-        print(f"{die} | Faces: {', '.join([Rune.TYPES[r]['symbol'] for r in die.runes])}")
-        face_idx = int(input(f"Which face (1-{die.sides})? ")) - 1
-        rune_idx = int(input("Which rune? ")) - 1
+            print(f"{i+1}. {rune.symbol}")
+        print(f"{die} | Faces: {', '.join([rune.symbol for rune in die.runes])}")
+        face_id = int(input(f"Which face (1-{die.sides})? ")) - 1
+        rune_id = int(input("Which rune? ")) - 1
         
-        if 0 <= face_idx < die.sides and 0 <= rune_idx < len(self.player.runes):
-            new_rune = self.player.runes[rune_idx]
-            old_rune = die.replace_rune(face_idx, self.player.runes[rune_idx])
-            del self.player.runes[rune_idx]
-            if old_rune != "empty":
+        if 0 <= face_id < die.sides and 0 <= rune_id < len(self.player.runes):
+            new_rune = self.player.runes[rune_id]
+            old_rune = die.replace_rune(face_id, self.player.runes[rune_id])
+            del self.player.runes[rune_id]
+            if old_rune.name != Runes.empty.value.name:
                 self.player.runes.append(old_rune)
-                print(f"Replaced {old_rune} with {new_rune} on face {face_idx+1}!")
+                print(f"Replaced {old_rune.symbol} with {new_rune.symbol} on face {face_id+1}!")
             else:
-                print(f"Attached {new_rune} to face {face_idx+1}!")
+                print(f"Attached {new_rune.symbol} to face {face_id+1}!")
         else:
             print("Invalid selection!")
-            
+        
+    def remove_rune(self, die):
+        print(f"{die} | Faces: {', '.join([rune.symbol for rune in die.runes])}")
+        face_id = int(input(f"Which face (1-{die.sides})? ")) - 1
+        if 0 <= face_id <= die.sides:
+            rune = die.remove_rune(face_id)
+            if rune.name != Runes.empty.value.name:
+                print(f"Removed {rune.symbol} from face {face_id+1}")
+                self.player.runes.append(rune)
+            else:
+                print(f"Cant remove rune from empty side")
+        
+    
     def upgrade_die(self, die):
         cost = 25 * (die.upgrades + 1)
         if self.player.gold >= cost:
@@ -136,62 +158,90 @@ class Workshop:
         }
         cost = 100
         
-        if die.base_sides in mutation_map and self.player.gold >= cost:
+        if die.base_sides in mutation_map.keys() and self.player.gold >= cost:
             self.player.gold -= cost
             new_sides = mutation_map[die.base_sides]
             die.mutate(new_sides)
             print(f"Mutated to d{new_sides}!")
         else:
             print("Can't mutate or insufficient funds!")
+    
+    def del_dice(self, die):
+        for i in range(len(self.player.dice)):
+            if self.player.dice[i] == die:
+                del self.player.dice[i]
+                
+    def del_rune(self, die):
+        print("\nAvailable Runes:")
+        for i, rune in enumerate(self.player.runes):
+            print(f"{i+1}. {rune.symbol}")
             
-    def apply_enchantment(self, die):
-        enchantments = {
-            'Burn': {'cost': 75, 'effect': 'burn'},
-            'Freeze': {'cost': 75, 'effect': 'freeze'},
-            'Spray': {'cost': 100, 'effect': 'aoe'}
-        }
+    # def apply_enchantment(self, die):
+    #     enchantments = {
+    #         'Burn': {'cost': 75, 'effect': 'burn'},
+    #         'Freeze': {'cost': 75, 'effect': 'freeze'},
+    #         'Spray': {'cost': 100, 'effect': 'aoe'}
+    #     }
         
-        print("Available Enchantments:")
-        for i, (name, info) in enumerate(enchantments.items()):
-            print(f"{i+1}. {name} ({info['cost']}g)")
+    #     print("Available Enchantments:")
+    #     for i, (name, info) in enumerate(enchantments.items()):
+    #         print(f"{i+1}. {name} ({info['cost']}g)")
             
-        choice = input("Choose enchantment: ")
-        try:
-            idx = int(choice) - 1
-            name = list(enchantments.keys())[idx]
-            info = enchantments[name]
+    #     choice = input("Choose enchantment: ")
+    #     try:
+    #         idx = int(choice) - 1
+    #         name = list(enchantments.keys())[idx]
+    #         info = enchantments[name]
             
-            if self.player.gold >= info['cost']:
-                self.player.gold -= info['cost']
-                die.enchant(info['effect'])
-                print(f"Applied {name} enchantment!")
-            else:
-                print("Not enough gold!")
-        except:
-            print("Invalid selection!")
+    #         if self.player.gold >= info['cost']:
+    #             self.player.gold -= info['cost']
+    #             die.enchant(info['effect'])
+    #             print(f"Applied {name} enchantment!")
+    #         else:
+    #             print("Not enough gold!")
+    #     except:
+    #         print("Invalid selection!")
 
 class Entity:
     def __init__(self, health):
+        self.target = None
         self.max_health = health
         self.health = health
         self.shield = 0
-        self.statuses = {}
+        self.effects = []
+        self.roll_results = []
+    
+    def set_target(self, entity):
+        self.target = entity
+    
+    def add_effect(self, effect):
+        for e in self.effects:
+            if e.name == effect.name:
+                e.add(effect)
+                break
+        else:
+            self.effects.append(effect)
         
-    def add_status(self, name, duration, potency):
-        self.statuses[name] = {'duration': duration, 'potency': potency}
-        
-    def tick_statuses(self):
-        expired = []
-        for status, info in self.statuses.items():
-            info['duration'] -= 1
-            if info['duration'] <= 0:
-                expired.append(status)
-        for status in expired:
-            del self.statuses[status]
+    def tick(self):
+        decayed_effect_ids = []
+        for i in range(len(self.effects)):
+            self.effects[i].tick()
+            if self.effects[i].is_ended:
+                decayed_effect_ids.append(i)
+        for i in decayed_effect_ids:
+            del self.effects[i]
         self.shield = max(self.shield - 1, 0)
+        self.crit = False
+        self.roll_results = []
             
     def is_alive(self):
         return self.health > 0
+    
+    def apply_effects(self, is_good):
+        for order in range(5):
+            for effect in self.effects:
+                if is_good == effect.is_good and order == effect.order:
+                    effect.apply(self)
     
     def take_damage(self, damage):
         actual = max(damage - self.shield, 0)
@@ -199,13 +249,15 @@ class Entity:
         self.health -= actual
         return actual
 
-# Modified Player class
+    def take_heal(self, amount):
+        self.health = min(self.health + amount, self.max_health)
+
 class Player(Entity):
     def __init__(self):
         super().__init__(30)
         self.dice = [
-            Die(4, ['attack']*4),
-            Die(4, ['shield']*4)
+            Die(4, [Runes.attack.value]*4),
+            Die(4, [Runes.shield.value]*4)
         ]
         self.runes = []
         self.artifacts = []
@@ -221,9 +273,9 @@ class Player(Entity):
             return True
         return False
 
-    def add_rune(self, rune_type):
+    def add_rune(self, rune):
         if len(self.runes) < self.max_runes:
-            self.runes.append(rune_type)
+            self.runes.append(rune)
             return True
         return False
 
@@ -235,148 +287,103 @@ class Enemy(Entity):
     def __init__(self, difficulty):
         super().__init__(8 + difficulty * 4)
         self.dice = [
-            Die(4, ['attack']*2 + ['shield']*2),
-            Die(4, ['attack']*3 + ['crit'])
+            Die(4, [Runes.attack.value]*2 + [Runes.shield.value]*2),
+            Die(4, [Runes.attack.value]*3 + [Runes.crit.value])
         ]
 
 class BattleSystem:
     def __init__(self, player, enemy):
         self.player = player
         self.enemy = enemy
-        
-    def process_roll(self, source, target, die, value, rune_type):
-        effect = {}
-        rune = Rune.TYPES[rune_type]
-        
-        potency = value
-
-        # Apply enchantment effects if the die has one
-        if source == self.player and die.enchantment:
-            potency = self.apply_enchantment_effect(die.enchantment, value)
-
-        if rune_type == 'attack':
-            damage = potency if rune['scaling'] else 1
-            effect['damage'] = effect.get('damage', 0) + damage
-        elif rune_type == 'shield':
-            shield_amount = potency if rune['scaling'] else 3
-            source.shield += shield_amount
-            effect['shield'] = effect.get('shield', 0) + shield_amount
-        elif rune_type == 'heal':
-            heal_amount = potency if rune['scaling'] else 2
-            source.health = min(source.health + heal_amount, source.max_health)
-            effect['heal'] = heal_amount
-        elif rune_type == 'crit':
-            effect['crit'] = effect.get('crit', 0) + 1
-        elif rune_type == 'burn':
-            target.add_status('burn', 2, potency)
-            effect['burn'] = potency
-        elif rune_type == 'poison':
-            target.add_status('poison', 3, potency)
-            effect['poison'] = potency
-
-        return effect
+        self.set_targets()
+    
+    def set_targets(self):
+        self.player.set_target(self.enemy)
+        self.enemy.set_target(self.player)
     
     def find_die_with_value(self, value):
         for die in self.player.dice:
             if die.current_value == value:
                 return die
         return None
-        
-    def apply_enchantment_effect(self, enchantment, value):
-        if enchantment == 'burn':
-            return 1  # Fixed potency
-        elif enchantment == 'aoe':
-            return value // 2  # Split damage
-        # Add other enchantment effects
-        return value
-    
-    def apply_status_damage(self):
-        for entity in [self.player, self.enemy]:
-            damage = 0
-            if 'burn' in entity.statuses:
-                dmg = entity.statuses['burn']['potency']
-                damage += dmg
-                print(f"{'Enemy' if entity==self.enemy else 'Player'} burns for {dmg}!")
-            if 'poison' in entity.statuses:
-                dmg = entity.statuses['poison']['potency']
-                damage += dmg
-                print(f"{'Enemy' if entity==self.enemy else 'Player'} poisoned for {dmg}!")
-            
-            if damage > 0:
-                entity.take_damage(damage)
                 
-    def show_statuses(self):
+    def show_effects(self):
         for name, entity in [('Player', self.player), ('Enemy', self.enemy)]:
-            if entity.statuses:
-                status_str = ", ".join([f"{k}({v['duration']})" for k,v in entity.statuses.items()])
-                print(f"{name} statuses: {status_str}")
+            if entity.effects:
+                effect_str = ""
+                for effect in entity.effects:
+                    if effect.name != "hidden":
+                        effect_str += f"{effect.symbol}({effect.value}|{effect.duration}); "
+                print(f"{name} statuses: {effect_str}")
+    
+    def resolve_rolls(self, player, enemy):
+        for order in range(6):
+            # applying rune effects
+            for value, rune in player.roll_results:
+                if rune.order == order:
+                    rune.apply(value, player)
+            for value, rune in enemy.roll_results:
+                if rune.order == order:
+                    rune.apply(value, enemy)
+            
+            # applying status effects
+            for effect in player.effects:
+                if effect.order == order:
+                    effect.apply(player)
+            for effect in enemy.effects:
+                if effect.order == order:
+                    effect.apply(enemy)
     
     def battle_round(self):
         print(f"\n=== Round Start ===")
+        print(f"\nPlayer: {self.player.health}/{self.player.max_health} HP | {self.player.shield} shield")
+        print(f"Enemy: {self.enemy.health}/{self.enemy.max_health} HP | {self.enemy.shield} shield")
         # Status damage
-        self.apply_status_damage()
-        self.show_statuses()
+        self.show_effects()
         
         # Player's turn
         print("\nPlayer's roll:")
-        player_effects = {'damage': 0, 'crit': 0}
         for die in self.player.dice:
-            val, rune = die.roll()
-            print(f"{die}\t: {val} {Rune.TYPES[rune]['symbol']}")
-            effects = self.process_roll(self.player, self.enemy, die, val, rune)
-            player_effects['damage'] += effects.get('damage', 0)
-            player_effects['crit'] += effects.get('crit', 0)
+            value, rune = die.roll()
+            self.player.roll_results.append([value, rune])
+            print(f"{die}\t: {value} {rune.symbol}")
             
         # Reroll logic
         while self.player.rerolls > 0:
             if input("\nReroll? (y/n): ").lower() == 'y':
+                die_id = 0
                 try:
-                    die_idx = int(input(f"Which die (1-{len(self.player.dice)}): ")) - 1
-                    die = self.player.dice[die_idx]
+                    die_id = int(input(f"Which die (1-{len(self.player.dice)}): ")) - 1
+                    die = self.player.dice[die_id]
                 except:
                     print("Invalid selection!")
-                val, rune = die.roll()
-                print(f"New roll: {val} {Rune.TYPES[rune]['symbol']}")
-                effects = self.process_roll(self.player, self.enemy, die, val, rune)
-                player_effects['damage'] += effects.get('damage',0)
-                player_effects['crit'] += effects.get('crit',0)
+                    break
+                value, rune = die.roll()
+                print(f"New roll: {value} {rune.symbol}")
+                self.player.roll_results[die_id] = [value, rune]
                 self.player.rerolls -= 1
             else:
                 break
+            
         self.player.rerolls = self.player.max_rerolls
         
         # Enemy turn
         print("\nEnemy's roll:")
-        enemy_effects = {'damage':0, 'crit':0}
         for die in self.enemy.dice:
-            val, rune = die.roll()
-            print(f"Enemy die: {val} {Rune.TYPES[rune]['symbol']}")
-            effects = self.process_roll(self.enemy, self.player, die, val, rune)
-            enemy_effects['damage'] += effects.get('damage',0)
-            enemy_effects['crit'] += effects.get('crit',0)
+            value, rune = die.roll()
+            self.enemy.roll_results.append([value, rune])
+            print(f"{die}\t: {value} {rune.symbol}")
+        
             
-        # Resolve combat
-        player_dmg = player_effects['damage']
-        if player_effects['crit']:
-            player_dmg *= 2
-            print("\nCritical hit!")
-            
-        enemy_dmg = enemy_effects['damage']
-        if enemy_effects['crit']:
-            enemy_dmg *= 2
-            print("Enemy critical hit!")
-            
-        self.enemy.take_damage(player_dmg)
-        self.player.take_damage(enemy_dmg)
+        # Resolve rolls results
+        self.resolve_rolls(self.player, self.enemy)
         
         print(f"\nPlayer: {self.player.health}/{self.player.max_health} HP | {self.player.shield} shield")
         print(f"Enemy: {self.enemy.health}/{self.enemy.max_health} HP | {self.enemy.shield} shield")
         
         # Tick status durations
-        self.player.tick_statuses()
-        self.enemy.tick_statuses()
-
-import random
+        self.player.tick()
+        self.enemy.tick()
 
 class Game:
     def __init__(self, player):
@@ -434,6 +441,7 @@ class Game:
             self.completed_rooms += 1
             self.player.health = min(self.player.health + 2, self.player.max_health)
 
+# Rooms
 class Room:
     @staticmethod
     def create(room_type, difficulty=0):
@@ -480,6 +488,7 @@ class CombatRoom(Room):
             battle.battle_round()
         
         if player.is_alive():
+            player.gold += int(random.randint(20, 40)*self.difficulty**(0.5))
             return True
         return False
 
@@ -494,7 +503,7 @@ class ChestRoom(Room):
         
         if reward == 'die':
             sides = random.choices([4, 6, 8, 10, 12, 20], weights=(6, 5, 4, 3, 2, 1), k=1)[0]
-            new_die = Die(sides, ['empty']*sides)
+            new_die = Die(sides, [Runes.empty.value]*sides)
             if player.add_die(new_die):
                 print(f"Found an empty d{sides} die!")
             else:
@@ -502,11 +511,12 @@ class ChestRoom(Room):
                 player.gold += 10
         
         elif reward == 'rune':
-            rune_type = random.choice(['attack', 'shield', 'heal', 'crit', 'poison'])
-            if player.add_rune(rune_type):
-                print(f"Found a {Rune.TYPES[rune_type]["symbol"]} rune!")
+            rune_type = random.choice(['attack', 'shield', 'heal', 'crit', 'poison', 'burn'])
+            rune = Runes[rune_type].value
+            if player.add_rune(rune):
+                print(f"Found a {rune.symbol} rune!")
             else:
-                print("Couldn't carry rune. Received 15 gold instead.")
+                print("Couldn't carry rune. Received 10 gold instead.")
                 player.gold += 10
         
         elif reward == 'artifact':
@@ -522,37 +532,47 @@ class ShopRoom(Room):
         return "Merchant Shop"
 
     def enter(self, player):
-        print("\nWelcome to the Shop!")
+        die_sides = random.choice([4, 6, 8])
+        die_runes = []
+        for _ in range(die_sides):
+            rune = random.choices([rune.value for rune in Runes], weights = (rune.value.rarity for rune in Runes), k=1)[0]
+            die_runes.append(rune)
+        die = Die(die_sides, die_runes)
+        print(die.runes)
+        die_cost = int(sum([rune.cost for rune in die.runes])*0.9 + 20)
+        rune1 = None
+        while rune1 == Runes.empty.value or rune1 == None:
+            rune1 = random.choice([rune.value for rune in Runes])
+        rune2 = None
+        while rune2 == Runes.empty.value or rune2 == None:
+            rune2 = random.choice([rune.value for rune in Runes])
+        print(f"\nWelcome to the Shop!")
         print(f"Your gold: {player.gold}")
-        print("1. Buy d4 Attack Die (50g)")
-        print("2. Buy Poison Rune (10g)")
-        print("3. Buy Crit Rune (10g)")
-        print("4. Leave")
+        print(f"1. Buy d{die_sides} Die ({die_cost}g) ({", ".join([rune.symbol for rune in die.runes])})")
+        print(f"2. Buy {rune1.symbol} Rune ({rune1.cost}g)")
+        print(f"3. Buy {rune2.symbol} Rune ({rune2.cost}g)")
+        print(f"4. Leave")
         
         choice = input("Choose: ")
-        if choice == '1' and player.gold >= 50:
-            player.gold -= 50
-            new_die = Die(4, ['attack']*4)
-            if player.add_die(new_die):
-                print("Purchased d4 attack die!")
+        if choice == '1' and player.gold >= die_cost:
+            if player.add_die(die):
+                player.gold -= die_cost
+                print(f"Purchased d{die_sides} Die!")
             else:
                 print("Cannot carry more dice! Refunding gold.")
-                player.gold += 50
-        elif choice == '2' and player.gold >= 10:
-            player.gold -= 10
-            if player.add_rune('poison'):
-                print(f"Purchased {Rune.TYPES['poison']['symbol']} rune!")
+        elif choice == '2' and player.gold >= rune1.cost:
+            if player.add_rune(rune1):
+                player.gold -= rune1.cost
+                print(f"Purchased {rune1.symbol} rune!")
             else:
                 print("Cannot carry more runes! Refunding gold.")
-                player.gold += 10
         
-        elif choice == '3' and player.gold >= 10:
-            player.gold -= 10
-            if player.add_rune('crit'):
-                print(f"Purchased {Rune.TYPES['crit']['symbol']} rune!")
+        elif choice == '3' and player.gold >= rune2.cost:
+            if player.add_rune(rune2):
+                player.gold -= rune2.cost
+                print(f"Purchased {rune2.symbol} rune!")
             else:
                 print("Cannot carry more runes! Refunding gold.")
-                player.gold += 10
         
         return True
 
@@ -563,17 +583,18 @@ class EventRoom(Room):
 
     def enter(self, player):
         event = random.choice(['heal', 'gold', 'trap'])
-        if event == 'heal':
-            player.health = player.max_health
-            print("\nA healing spring restores you to full health!")
-        elif event == 'gold':
-            gold = random.randint(20, 40)
-            player.gold += gold
-            print(f"\nFound {gold} gold in an abandoned cart!")
-        elif event == 'trap':
-            damage = random.randint(5, 10)
-            player.take_damage(damage)
-            print(f"\nTriggered a trap! Took {damage} damage!")
+        match(event):
+            case 'heal':
+                player.health = player.max_health
+                print("\nA healing spring restores you to full health!")
+            case 'gold':
+                gold = random.randint(20, 40)
+                player.gold += gold
+                print(f"\nFound {gold} gold in an abandoned cart!")
+            case 'trap':
+                damage = random.randint(5, 10)
+                player.take_damage(damage)
+                print(f"\nTriggered a trap! Took {damage} damage!")
         return True
 
 class BossRoom(CombatRoom):
@@ -594,6 +615,7 @@ class BossRoom(CombatRoom):
             battle.battle_round()
         
         return player.is_alive()
+
 
 class Artifact:
     def __init__(self, name, effect):
