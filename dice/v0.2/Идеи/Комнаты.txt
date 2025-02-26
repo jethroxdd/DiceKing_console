@@ -1,0 +1,1 @@
+    Forge room      Destroy a rune to add its effect permanently to one face.

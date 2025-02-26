@@ -1,0 +1,7 @@
+    Risk-Taker’s Gambit     Rerolling a die adds +2 to its result, but you can no longer reroll that die for the rest of the battle.
+    Shard of Infinity       When a die rolls its maximum value, duplicate its effect (great for big dice like d10s)
++   Void Sigil              Every 3 broken shield, deal 5 damage to all enemies.
+    Rune collection         Enemies take 1 damage for every unique rune type you activate in a round (encourages hybrid builds).
+    Merchant’s Bargain      Shops sell items for 30% less, but enemies drop 40% less gold.
+    Колючая перчатка        Можно перебрасывать кости после использования всех перебросов. Такие перебросы наносят выпавшее значение самоурона.
+    Decoy coin              Можно потратить свои перебросы для переброса костей противника.

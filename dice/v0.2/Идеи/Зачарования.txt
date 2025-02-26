@@ -1,0 +1,5 @@
+    Burn Enchant        All attack faces also apply 1 burn (scales with fire-themed artifacts).
+    Spray Enchant       Effects hit all enemies, but power is the lowest face number.
+    Chaining Enchant    Attacks bounce to 1 additional enemy behind at 50% power.
+    Overcharge Enchant  +2 to all face numbers, but take 1 self damage when rolled.
+    Vampiric Enchant    Healing effects also apply shields for 20% of the value
