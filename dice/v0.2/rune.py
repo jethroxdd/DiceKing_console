@@ -16,14 +16,14 @@ Order:
 @enum.unique
 class RuneType(enum.Enum):
     empty = f"-"
-    attack = f"{Fore(160)}attack{Style.RESET_ALL}"
-    shield = f"{Fore(23)}shield{Style.RESET_ALL}"
-    heal = f"{Fore(40)}heal{Style.RESET_ALL}"
-    crit = f"{Fore(220)}crit{Style.RESET_ALL}"
-    burn = f"{Fore(202)}burn{Style.RESET_ALL}"
-    leach = f"{Fore(63)}leach{Style.RESET_ALL}"
-    poison = f"{Fore(92)}poison{Style.RESET_ALL}"
-    golden = f"{Fore(220)}golden{Style.RESET_ALL}"
+    attack = f"{Fore(160)}атака{Style.RESET_ALL}"
+    shield = f"{Fore(23)}щит{Style.RESET_ALL}"
+    heal = f"{Fore(40)}лечение{Style.RESET_ALL}"
+    crit = f"{Fore(220)}крит{Style.RESET_ALL}"
+    burn = f"{Fore(202)}жар{Style.RESET_ALL}"
+    leach = f"{Fore(63)}лич{Style.RESET_ALL}"
+    poison = f"{Fore(92)}яд{Style.RESET_ALL}"
+    golden = f"{Fore(220)}золотая{Style.RESET_ALL}"
 
 class BaseRune:
     def __init__(self, _type: RuneType, order, cost, rarity):

@@ -13,12 +13,11 @@ Order:
 '''  
 
 
-@enum.unique
 class EffectType(enum.Enum):
     damage = "hidden"
     self_damage = "hidden"
-    burn = f"{Fore(202)}burn{Style.RESET_ALL}"
-    poison = f"{Fore(92)}poison{Style.RESET_ALL}"
+    burn = f"{Fore(202)}горение{Style.RESET_ALL}"
+    poison = f"{Fore(92)}яд{Style.RESET_ALL}"
 
 class BaseEffect:
     def __init__(self, _type, value , duration, order, is_good: bool):

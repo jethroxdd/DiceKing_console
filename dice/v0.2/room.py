@@ -30,16 +30,16 @@ class Workshop:
     
     def modify_dice(self):
         while True:
-            print("\n=== Dice Workshop ===")
-            print(f"Gold: {self.player.gold}")
-            print("\nAvailable Runes:")
+            print("\n=== Мастерская ===")
+            print(f"Золото: {self.player.gold}")
+            print("\nДоступные руны:")
             for i, rune in enumerate(self.player.runes):
                 print(f"{i+1}. {rune.symbol}")
-            print("\nSelect a die to modify:")
+            print("\nДоступные кости:")
             for i, die in enumerate(self.player.dice):
-                print(f"{i+1}. {die} | Faces: {', '.join([rune.symbol for rune in die.runes])}")
+                print(f"{i+1}. {die} | Стороны: {', '.join([rune.symbol for rune in die.runes])}")
                 
-            choice = input("\nChoose die (1-8) or (q)uit: ")
+            choice = input("\nВыбери кость (1-8) или выход(q): ")
             if choice.lower() == 'q':
                 break
                 
@@ -48,21 +48,21 @@ class Workshop:
                 selected_die = self.player.dice[die_idx]
                 self.show_mod_options(selected_die)
             except (ValueError, IndexError):
-                print("Invalid selection!")
+                print("Неправильный выбор!")
                 
     def show_mod_options(self, die):
         while True:
-            print(f"\nSelected: {die}")
-            print("1. Attach Rune to Face")
-            print("2. Take off Rune from Face")
-            print("3. Upgrade Die (+1 to all faces)")
-            print("4. Mutate Die (increase die type)")
-            print("5. Delete dice")
-            print("6. Delete rune")
+            print(f"\nВыбрано: {die}")
+            print("1. Прикрепить руну к стороне")
+            print("2. Снять руну со стороны")
+            print("3. Улучшить(+1 ко всем сторонам)")
+            print("4. Преобразовать(увеличить количество сторон)")
+            print("5. Удалить кость")
+            print("6. Удалить руну")
             # print("4. Apply Enchantment")
-            print("q. Back")
+            print("q. Назад")
             
-            choice = input("Choose modification: ")
+            choice = input("Выберите: ")
             
             if choice == '1':
                 self.attach_rune(die)
@@ -81,15 +81,15 @@ class Workshop:
             elif choice == 'q':
                 break
             else:
-                print("Invalid choice!")
+                print("Неправильный выбор!")
                 
     def attach_rune(self, die):
-        print("\nAvailable Runes:")
+        print("\nДоступные руны:")
         for i, rune in enumerate(self.player.runes):
             print(f"{i+1}. {rune.symbol}")
-        print(f"{die} | Faces: {', '.join([rune.symbol for rune in die.runes])}")
-        face_id = int(input(f"Which face (1-{die.sides})? ")) - 1
-        rune_id = int(input("Which rune? ")) - 1
+        print(f"{die} | Стороны: {', '.join([rune.symbol for rune in die.runes])}")
+        rune_id = int(input("Какую руну? ")) - 1
+        face_id = int(input(f"Какую сторону (1-{die.sides})? ")) - 1
         
         if 0 <= face_id < die.sides and 0 <= rune_id < len(self.player.runes):
             new_rune = self.player.runes[rune_id]
@@ -97,22 +97,22 @@ class Workshop:
             del self.player.runes[rune_id]
             if old_rune.name != Runes.empty.value.name:
                 self.player.runes.append(old_rune)
-                print(f"Replaced {old_rune.symbol} with {new_rune.symbol} on face {face_id+1}!")
+                print(f"Замена {old_rune.symbol} на {new_rune.symbol} на стороне {face_id+1}!")
             else:
-                print(f"Attached {new_rune.symbol} to face {face_id+1}!")
+                print(f"Прикреплено {new_rune.symbol} к стороне {face_id+1}!")
         else:
-            print("Invalid selection!")
+            print("Неправильный выбор!")
         
     def remove_rune(self, die):
-        print(f"{die} | Faces: {', '.join([rune.symbol for rune in die.runes])}")
-        face_id = int(input(f"Which face (1-{die.sides})? ")) - 1
+        print(f"{die} | Стороны: {', '.join([rune.symbol for rune in die.runes])}")
+        face_id = int(input(f"С какой стороны (1-{die.sides})? ")) - 1
         if 0 <= face_id <= die.sides:
             rune = die.remove_rune(face_id)
             if rune.name != Runes.empty.value.name:
-                print(f"Removed {rune.symbol} from face {face_id+1}")
+                print(f"Убрано {rune.symbol} со стороны {face_id+1}")
                 self.player.runes.append(rune)
             else:
-                print(f"Cant remove rune from empty side")
+                print(f"Нельзя снять руну с пустой стороны")
         
     
     def upgrade_die(self, die):
@@ -120,9 +120,9 @@ class Workshop:
         if self.player.gold >= cost:
             self.player.gold -= cost
             die.upgrade()
-            print(f"Upgraded to d{die.base_sides}+{die.upgrades}!")
+            print(f"улучшено до d{die.base_sides}+{die.upgrades}!")
         else:
-            print(f"Need {cost} gold for next upgrade!")
+            print(f"Нужно {cost} золота для следующего улучшения!")
             
     def mutate_die(self, die):
         mutation_map = {
@@ -137,9 +137,9 @@ class Workshop:
             self.player.gold -= cost
             new_sides = mutation_map[die.base_sides]
             die.mutate(new_sides)
-            print(f"Mutated to d{new_sides}!")
+            print(f"Преобразовано в d{new_sides}!")
         else:
-            print("Can't mutate or insufficient funds!")
+            print("нельзя преобразовать!")
     
     def del_dice(self, die):
         for i in range(len(self.player.dice)):
@@ -147,7 +147,7 @@ class Workshop:
                 del self.player.dice[i]
                 
     def del_rune(self, die):
-        print("\nAvailable Runes:")
+        print("\nДоступные руны:")
         for i, rune in enumerate(self.player.runes):
             print(f"{i+1}. {rune.symbol}")
             
@@ -180,7 +180,7 @@ class Workshop:
 class WorkshopRoom(Room):
     @property
     def description(self):
-        return "Modification Workshop"
+        return "Мастерская"
     
     def enter(self, player):
         workshop = Workshop(player)
@@ -204,13 +204,13 @@ class BattleSystem:
         return None
                 
     def show_effects(self):
-        for name, entity in [('Player', self.player), ('Enemy', self.enemy)]:
+        for name, entity in [('Игрок', self.player), ('Враг', self.enemy)]:
             if entity.effects:
                 effect_str = ""
                 for effect in entity.effects:
                     if effect.symbol != "hidden":
                         effect_str += f"{effect.symbol}({effect.value}|{effect.duration}); "
-                print(f"{name} statuses: {effect_str}")
+                print(f"{name} Эффекты: {effect_str}")
     
     def resolve_rolls(self, player, enemy):
         for order in range(6):
@@ -231,14 +231,14 @@ class BattleSystem:
                     effect.apply(enemy)
     
     def battle_round(self):
-        print(f"\n=== Round Start ===")
-        print(f"\nPlayer: {self.player.health}/{self.player.max_health} HP | {self.player.shield} shield")
-        print(f"Enemy: {self.enemy.health}/{self.enemy.max_health} HP | {self.enemy.shield} shield")
+        print(f"\n=== Начало раунда ===")
+        print(f"\nИгрок: {self.player.health}/{self.player.max_health} HP | {self.player.shield} щит")
+        print(f"Враг: {self.enemy.health}/{self.enemy.max_health} HP | {self.enemy.shield} щит")
         # Status damage
         self.show_effects()
         
         # Player's turn
-        print("\nPlayer's roll:")
+        print("\nБроски игрока:")
         for die in self.player.dice:
             value, rune = die.roll()
             self.player.roll_results.append([value, rune])
@@ -246,16 +246,16 @@ class BattleSystem:
             
         # Reroll logic
         while self.player.rerolls > 0:
-            if input("\nReroll? (y/n): ").lower() == 'y':
+            if input("\nПереброс? (y/n): ").lower() == 'y':
                 die_id = 0
                 try:
-                    die_id = int(input(f"Which die (1-{len(self.player.dice)}): ")) - 1
+                    die_id = int(input(f"Какую (1-{len(self.player.dice)}): ")) - 1
                     die = self.player.dice[die_id]
                 except:
-                    print("Invalid selection!")
+                    print("Неправильный выбор!")
                     break
                 value, rune = die.roll()
-                print(f"New roll: {value} {rune.symbol}")
+                print(f"Новый бросок: {value} {rune.symbol}")
                 self.player.roll_results[die_id] = [value, rune]
                 self.player.rerolls -= 1
             else:
@@ -264,7 +264,7 @@ class BattleSystem:
         self.player.rerolls = self.player.max_rerolls
         
         # Enemy turn
-        print("\nEnemy's roll:")
+        print("\nБроски врага:")
         for die in self.enemy.dice:
             value, rune = die.roll()
             self.enemy.roll_results.append([value, rune])
@@ -274,8 +274,8 @@ class BattleSystem:
         # Resolve rolls results
         self.resolve_rolls(self.player, self.enemy)
         
-        print(f"\nPlayer: {self.player.health}/{self.player.max_health} HP | {self.player.shield} shield")
-        print(f"Enemy: {self.enemy.health}/{self.enemy.max_health} HP | {self.enemy.shield} shield")
+        print(f"\nИгрок: {self.player.health}/{self.player.max_health} HP | {self.player.shield} щит")
+        print(f"Враг: {self.enemy.health}/{self.enemy.max_health} HP | {self.enemy.shield} щит")
         
         # Tick status durations
         self.player.tick()
@@ -287,18 +287,18 @@ class CombatRoom(Room):
 
     @property
     def description(self):
-        return f"Enemy Encounter (Level {self.difficulty})"
+        return f"Логово врага (уровень {self.difficulty})"
 
     def enter(self, player):
         enemy = Enemy(self.difficulty)
         battle = BattleSystem(player, enemy)
         
-        print(f"\n=== Enemy Encounter! ===")
+        print(f"\n=== Логово врага! ===")
         while player.is_alive() and enemy.is_alive():
             battle.battle_round()
         
         if player.is_alive():
-            player.gold += int(random.randint(20, 40)*self.difficulty**(0.5))
+            player.gold += int(random.randint(5, 10)*self.difficulty**(0.5))
             player.shield = 0
             return True
         return False
@@ -306,41 +306,45 @@ class CombatRoom(Room):
 class ChestRoom(Room):
     @property
     def description(self):
-        return "Treasure Chest"
+        return "Сундук сокровищ"
 
     def enter(self, player):
-        print(f"\n{Fore(228)}You found a glowing chest!{Style.RESET_ALL}")
+        print(f"\n{Fore(228)}Вы нашли блестящий сундук!{Style.RESET_ALL}")
         reward = random.choices(['die', 'rune', 'artifact'], weights=(1, 3, 1), k=1)[0]
         
-        if reward == 'die':
-            sides = random.choices([4, 6, 8, 10, 12, 20], weights=(6, 5, 4, 3, 2, 1), k=1)[0]
-            new_die = Die(sides, [Runes.empty.value]*sides)
-            if player.add_die(new_die):
-                print(f"Found an empty d{sides} die!")
-            else:
-                print(f"Couldn't carry die. Received 30 gold instead.")
-                player.gold += 10
-        
-        elif reward == 'rune':
-            rune = random.choices([r.value for r in Runes][1:], [r.value.rarity for r in Runes][1:], k=1)[0]
-            if player.add_rune(rune):
-                print(f"Found {rune.symbol} rune!")
-            else:
-                print(f"Couldn't carry rune. Received 10 gold instead.")
-                player.gold += 10
-        
-        elif reward == 'artifact':
-            artifact = random.choices([a.value for a in Artifacts], [a.value.rarity for a in Artifacts], k=1)[0]
-            print(f"Found {artifact.name}!\n{artifact.description}.")
-            if input("Take it? (y/n)") == "y":
-                player.add_artifact(artifact)
-                print(f"You now have {artifact.name}!")
+        match(reward):
+            case'die':
+                sides = random.choices([4, 6, 8, 10, 12, 20], weights=(6, 5, 4, 3, 2, 1), k=1)[0]
+                new_die = Die(sides, [Runes.empty.value]*sides)
+                if player.add_die(new_die):
+                    print(f"Найдена пустая кость d{sides}!")
+                else:
+                    print(f"Нет места. {sides*2} золота вместо этого.")
+                    player.gold += 10
+            
+            case 'rune':
+                rune = random.choices([r.value for r in Runes][1:], [r.value.rarity for r in Runes][1:], k=1)[0]
+                if player.add_rune(rune):
+                    print(f"Найдена руна {rune.symbol}!")
+                else:
+                    print(f"Нет места. {rune.cost} золота вместо этого.")
+                    player.gold += rune.cost
+            
+            case 'artifact':
+                artifact = random.choices([a.value for a in Artifacts], [a.value.rarity for a in Artifacts], k=1)[0]
+                print(f"Найдено {artifact.name}!\n{artifact.description}.")
+                if input("Взять? (y/n)") == "y":
+                    if player.add_artifact(artifact):
+                        print(f"You now have {artifact.name}!")
+                    else:
+                        print(f"Нет места. 30 золота вместо этого.")
+                        player.gold += 30
         return True
 
 class ShopRoom(Room):
     @property
     def description(self):
-        return "Merchant Shop"
+        return "Магазин"
 
     def enter(self, player):
         die_sides = random.choice([4, 6, 8])
@@ -349,58 +353,58 @@ class ShopRoom(Room):
             rune = random.choices([r.value for r in Runes], weights = (r.value.rarity for r in Runes), k=1)[0]
             die_runes.append(rune)
         die = Die(die_sides, die_runes)
-        die_cost = int(sum([r.cost for r in die.runes])*0.9 + 20)
+        die_cost = int(sum([r.cost for r in die.runes])*0.9 + die_sides*2)
         rune1 = random.choices([r.value for r in Runes][1:], [r.value.rarity for r in Runes][1:], k=1)[0]
         rune2 = random.choices([r.value for r in Runes][1:], [r.value.rarity for r in Runes][1:], k=1)[0]
-        print(f"\nWelcome to the Shop!")
-        print(f"Your gold: {player.gold}")
-        print(f"1. Buy d{die_sides} Die ({die_cost}g) ({", ".join([rune.symbol for rune in die.runes])})")
-        print(f"2. Buy {rune1.symbol} Rune ({rune1.cost}g)")
-        print(f"3. Buy {rune2.symbol} Rune ({rune2.cost}g)")
+        print(f"\nДобро пожаловать в магазин!")
+        print(f"Золото: {player.gold}g")
+        print(f"1. Купить кость d{die_sides} за ({die_cost}g) ({", ".join([rune.symbol for rune in die.runes])})")
+        print(f"2. Купить руну {rune1.symbol} за ({rune1.cost}g)")
+        print(f"3. Купить руну {rune2.symbol} за ({rune2.cost}g)")
         print(f"4. Leave")
         
-        choice = input("Choose: ")
+        choice = input("Выбор: ")
         if choice == '1' and player.gold >= die_cost:
             if player.add_die(die):
                 player.gold -= die_cost
-                print(f"Purchased d{die_sides} Die!")
+                print(f"Куплена кость d{die_sides}!")
             else:
-                print("Cannot carry more dice! Refunding gold.")
+                print("Нет места.")
         elif choice == '2' and player.gold >= rune1.cost:
             if player.add_rune(rune1):
                 player.gold -= rune1.cost
-                print(f"Purchased {rune1.symbol} rune!")
+                print(f"Куплена руна {rune1.symbol}!")
             else:
-                print("Cannot carry more runes! Refunding gold.")
+                print("Нет места.")
         
         elif choice == '3' and player.gold >= rune2.cost:
             if player.add_rune(rune2):
                 player.gold -= rune2.cost
-                print(f"Purchased {rune2.symbol} rune!")
+                print(f"Куплена руна {rune2.symbol}!")
             else:
-                print("Cannot carry more runes! Refunding gold.")
+                print("Нет места.")
         
         return True
 
 class EventRoom(Room):
     @property
     def description(self):
-        return "Mysterious Event"
+        return "Таинственное событие"
 
     def enter(self, player):
         event = random.choice(['heal', 'gold', 'trap'])
         match(event):
             case 'heal':
                 player.health = player.max_health
-                print(f"\n{Fore(228)}A healing spring restores you to full health!{Style.RESET_ALL}")
+                print(f"\n{Fore(228)}Лечебные источники востановили все здоровье!{Style.RESET_ALL}")
             case 'gold':
                 gold = random.randint(20, 40)
                 player.gold += gold
-                print(f"\n{Fore(228)}Found {gold} gold in an abandoned cart!{Style.RESET_ALL}")
+                print(f"\n{Fore(228)}Найдено {gold} золота в забытой вагонетке!{Style.RESET_ALL}")
             case 'trap':
                 damage = random.randint(5, 10)
                 player.take_damage(damage)
-                print(f"\n{Fore(228)}Triggered a trap! Took {damage} damage!{Style.RESET_ALL}")
+                print(f"\n{Fore(228)}Ловушка! получено {damage} урона!{Style.RESET_ALL}")
         return True
 
 class BossRoom(CombatRoom):
@@ -409,11 +413,11 @@ class BossRoom(CombatRoom):
 
     @property
     def description(self):
-        return "Final Boss Lair"
+        return "Логово Босса"
 
     def enter(self, player):
-        print(f"\n{Back(52)}=== FINAL BOSS APPEARS ==={Style.RESET_ALL}")
-        boss = Enemy(15, "Boss")
+        print(f"\n{Back(52)}=== ПОСЛЕДНИЙ БОСС ==={Style.RESET_ALL}")
+        boss = Enemy(15, "Босс")
         boss.dice.append(Die(10, [Runes.poison.value]*8 + [Runes.crit.value]*3))
         battle = BattleSystem(player, boss)
         

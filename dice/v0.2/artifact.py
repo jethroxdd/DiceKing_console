@@ -9,14 +9,14 @@ class BaseArtifact:
 
 class MagicCharm(BaseArtifact):
     def __init__(self):
-        super().__init__("Magic Charm", "Gain +1 max reroll", 4)
+        super().__init__("Магическая сфера", "Дает +1 рерол", 4)
     
     def apply(self, player):
         player.max_rerolls += 1
 
 class ThornShield(BaseArtifact):
     def __init__(self):
-        super().__init__("Glass Shield", "Deal 1 damage to enemy for each 3 broken shield", 2)
+        super().__init__("Осколочный щит", "Наносит 1 урон за каждые 3 сломаных щита", 2)
     
     @staticmethod
     def effect(source):
@@ -30,7 +30,7 @@ class ThornShield(BaseArtifact):
 
 class MasochistsWhip(BaseArtifact):
     def __init__(self):
-        super().__init__("Masochist's whip", "Self damage now deal true damage and gives X shield", 1)
+        super().__init__("Пояс терпимости", "Самоурон теперь наносит чистый урон и дает X щита", 1)
     
     @staticmethod
     def effect(source):

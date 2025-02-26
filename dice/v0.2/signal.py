@@ -16,4 +16,4 @@ class EntitySignal(Signal):
     
     def emit(self):
         for signal in self.signals:
-            signal(self.entity)
+            signal(self.entity) # type: ignore

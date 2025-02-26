@@ -1,4 +1,4 @@
-from signal import EntitySignal
+from signal import EntitySignal # type: ignore
 from die import Die
 from rune import Runes
 
@@ -93,9 +93,10 @@ class Player(Entity):
         if not self.has_artifact(artifact):
             self.artifacts.append(artifact)
             artifact.apply(self)
-            return
+            return True
         else:
-            print(f"Can't hold another {artifact.name} artifact")
+            print(f"Нет места для {artifact.name}")
+            return False
     
     def has_artifact(self, artifact):
         for a in self.artifacts:
@@ -104,14 +105,14 @@ class Player(Entity):
         return False
 
 class Enemy(Entity):
-    def __init__(self, difficulty, name="Enemy", base_health=8, mult_health=4):
+    def __init__(self, difficulty, name="Враг", base_health=8, mult_health=4):
         super().__init__(base_health + difficulty * mult_health)
         self.name = name
 
 
 class Rat(Enemy):
     def __init__(self, difficulty):
-        super().__init__(difficulty, "Rat")
+        super().__init__(difficulty, "Крыса")
         self.dice = [
             Die(4, [Runes.poison.value]*1 + [Runes.attack.value]*3)
         ]
