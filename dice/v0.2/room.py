@@ -1,13 +1,14 @@
 import random
+import effect
 from rune import Runes
 from color import Fore, Back, Style
 from die import Die
 from artifact import Artifacts
-from entity import Enemy
+from entity import Enemy, Rat, Toad, Boss
 
 class Room:
     @staticmethod
-    def create(room_type, difficulty=0):
+    def create(room_type, difficulty):
         if room_type == 'enemy':
             return CombatRoom(difficulty)
         elif room_type == 'chest':
@@ -15,7 +16,7 @@ class Room:
         elif room_type == 'shop':
             return ShopRoom()
         elif room_type == 'event':
-            return EventRoom()
+            return EventRoom(difficulty)
         elif room_type == 'workshop':
             return WorkshopRoom()
         return Room()
@@ -57,8 +58,8 @@ class Workshop:
             print("2. Снять руну со стороны")
             print("3. Улучшить(+1 ко всем сторонам)")
             print("4. Преобразовать(увеличить количество сторон)")
-            print("5. Удалить кость")
-            print("6. Удалить руну")
+            print("5. Продать кость")
+            print("6. Продать руну")
             # print("4. Apply Enchantment")
             print("q. Назад")
             
@@ -74,8 +75,9 @@ class Workshop:
                 self.mutate_die(die)
             elif choice == '5':
                 self.del_dice(die)
+                return
             elif choice == '6':
-                self.del_dice(die)
+                self.del_rune()
             # elif choice == '4':
                 # self.apply_enchantment(die)
             elif choice == 'q':
@@ -120,7 +122,7 @@ class Workshop:
         if self.player.gold >= cost:
             self.player.gold -= cost
             die.upgrade()
-            print(f"улучшено до d{die.base_sides}+{die.upgrades}!")
+            print(f"улучшено до d{die.sides}+{die.upgrades}!")
         else:
             print(f"Нужно {cost} золота для следующего улучшения!")
             
@@ -133,23 +135,38 @@ class Workshop:
         }
         cost = 100
         
-        if die.base_sides in mutation_map.keys() and self.player.gold >= cost:
+        if die.sides in mutation_map.keys() and self.player.gold >= cost:
             self.player.gold -= cost
-            new_sides = mutation_map[die.base_sides]
+            new_sides = mutation_map[die.sides]
             die.mutate(new_sides)
             print(f"Преобразовано в d{new_sides}!")
         else:
-            print("нельзя преобразовать!")
+            print("Нельзя преобразовать!")
     
     def del_dice(self, die):
         for i in range(len(self.player.dice)):
             if self.player.dice[i] == die:
+                die_runes = die.runes
+                gold_reward: int = die.sides
+                for r in die_runes:
+                    gold_reward += r.cost
+                gold_reward *= 0.5
+                self.player.gold += int(gold_reward)
+                print(f"Получено {int(gold_reward)} золота")
                 del self.player.dice[i]
                 
-    def del_rune(self, die):
+    def del_rune(self):
         print("\nДоступные руны:")
         for i, rune in enumerate(self.player.runes):
             print(f"{i+1}. {rune.symbol}")
+        rune_id = int(input("\n Введите номер руны: "))
+        try:
+            gold_reward = int(self.player.runes[rune_id-1].cost * 0.5)
+            self.player.gold += gold_reward
+            print(f"Получено {gold_reward} золота")
+            del self.player.runes[rune_id-1]
+        except:
+            print("Неправильный выбор!")
             
     # def apply_enchantment(self, die):
     #     enchantments = {
@@ -204,7 +221,7 @@ class BattleSystem:
         return None
                 
     def show_effects(self):
-        for name, entity in [('Игрок', self.player), ('Враг', self.enemy)]:
+        for name, entity in [('Игрок', self.player), (self.enemy.name, self.enemy)]:
             if entity.effects:
                 effect_str = ""
                 for effect in entity.effects:
@@ -233,7 +250,7 @@ class BattleSystem:
     def battle_round(self):
         print(f"\n=== Начало раунда ===")
         print(f"\nИгрок: {self.player.health}/{self.player.max_health} HP | {self.player.shield} щит")
-        print(f"Враг: {self.enemy.health}/{self.enemy.max_health} HP | {self.enemy.shield} щит")
+        print(f"{self.enemy.name}: {self.enemy.health}/{self.enemy.max_health} HP | {self.enemy.shield} щит")
         # Status damage
         self.show_effects()
         
@@ -246,20 +263,17 @@ class BattleSystem:
             
         # Reroll logic
         while self.player.rerolls > 0:
-            if input("\nПереброс? (y/n): ").lower() == 'y':
-                die_id = 0
-                try:
-                    die_id = int(input(f"Какую (1-{len(self.player.dice)}): ")) - 1
-                    die = self.player.dice[die_id]
-                except:
-                    print("Неправильный выбор!")
-                    break
-                value, rune = die.roll()
-                print(f"Новый бросок: {value} {rune.symbol}")
-                self.player.roll_results[die_id] = [value, rune]
-                self.player.rerolls -= 1
-            else:
+            die_id = 0
+            try:
+                die_id = int(input(f"Переброс (1-{len(self.player.dice)}): ")) - 1
+                die = self.player.dice[die_id]
+            except:
+                print("Неправильный выбор!")
                 break
+            value, rune = die.roll()
+            print(f"Новый бросок: {value} {rune.symbol}")
+            self.player.roll_results[die_id] = [value, rune]
+            self.player.rerolls -= 1
             
         self.player.rerolls = self.player.max_rerolls
         
@@ -275,31 +289,37 @@ class BattleSystem:
         self.resolve_rolls(self.player, self.enemy)
         
         print(f"\nИгрок: {self.player.health}/{self.player.max_health} HP | {self.player.shield} щит")
-        print(f"Враг: {self.enemy.health}/{self.enemy.max_health} HP | {self.enemy.shield} щит")
+        print(f"{self.enemy.name}: {self.enemy.health}/{self.enemy.max_health} HP | {self.enemy.shield} щит")
         
         # Tick status durations
         self.player.tick()
         self.enemy.tick()
+        
+        input("Enter чтобы продолжить...")
 
 class CombatRoom(Room):
-    def __init__(self, difficulty_mod=0):
-        self.difficulty = random.randint(1, 2) + difficulty_mod
+    def __init__(self, difficulty):
+        self.difficulty = random.randint(1, 2) + difficulty
 
     @property
     def description(self):
         return f"Логово врага (уровень {self.difficulty})"
 
     def enter(self, player):
-        enemy = Enemy(self.difficulty)
+        enemy = random.choice([Rat(self.difficulty), Toad(self.difficulty)])
         battle = BattleSystem(player, enemy)
         
         print(f"\n=== Логово врага! ===")
+        print(f"\nКости врага {enemy.name}:")
+        for i, die in enumerate(enemy.dice):
+                print(f"{i+1}. {die} | Стороны: {', '.join([rune.symbol for rune in die.runes])}")
         while player.is_alive() and enemy.is_alive():
             battle.battle_round()
         
         if player.is_alive():
-            player.gold += int(random.randint(5, 10)*self.difficulty**(0.5))
-            player.shield = 0
+            reward_gold = enemy.gold
+            player.gold += reward_gold
+            print(f"\nПолучено {reward_gold} золота")
             return True
         return False
 
@@ -386,30 +406,151 @@ class ShopRoom(Room):
         
         return True
 
+# Event rooms
+class HealRoom(Room):
+    @staticmethod
+    def enter(player):
+        player.health = player.max_health
+        print(f"\n{Fore(228)}Лечебные источники востановили все здоровье!{Style.RESET_ALL}")
+
+class GoldRoom(Room):
+    @staticmethod
+    def enter(player):
+        gold = random.randint(20, 40)
+        player.gold += gold
+        print(f"\n{Fore(228)}Найдено {gold} золота в забытой вагонетке!{Style.RESET_ALL}")
+
+class TrapRoom(Room):
+    @staticmethod
+    def enter(player):
+        damage = random.randint(5, 10)
+        player.take_damage(damage)
+        print(f"\n{Fore(228)}Ловушка! получено {damage} урона!{Style.RESET_ALL}")
+
+class StrangerRoom(Room):
+    @staticmethod
+    def enter(player):
+        print(f"\n{Fore(153)}Таинственный незнакомец предлагает благословение...{Style.RESET_ALL}")
+        print("1. +2 к всем броскам в следующей битве")
+        print("2. Восстановить 10 здоровья")
+        choice = input("Выберите дар (1-2): ")
+        if choice == '1':
+            player.add_effect(effect.Blessing(2))
+            print(f"{Fore(153)}Вы чувствуете прилив магической энергии!{Style.RESET_ALL}")
+        elif choice == '2':
+            player.take_heal(10)
+            print(f"{Fore(153)}Вас наполняет целительная сила!{Style.RESET_ALL}")
+
+class GambleRoom(Room):
+    @staticmethod
+    def enter(player):
+        print(f"\n{Fore(136)}Вы нашли подпольное казино!{Style.RESET_ALL}")
+        if player.gold >= 20:
+            try:
+                bet = int(input("Введите ставку: "))
+                if 0 > bet > player.gold:
+                    player.gold -= bet
+                    if random.randint(0, 1):
+                        player.gold += bet*2
+                        print(f"{Fore(220)}Вы выиграли {bet*2} золота!{Style.RESET_ALL}")
+                    else:
+                        print(f"{Fore(124)}Вы проиграли...{Style.RESET_ALL}")
+                else:
+                    print("Неправильная ставка!")
+            except:
+                print("Вас выгнали из казино!")
+        else:
+            print("У вас недостаточно денег, чтобы войти.")
+
+class ForgeRoom(Room):
+    @staticmethod
+    def enter(player):
+        print(f"\n{Fore(94)}Вы нашли древнюю кузницу!{Style.RESET_ALL}")
+        print(f"{Fore(94)}Используйте на свой страх и риск!{Style.RESET_ALL}")
+        if input("\nИспользовать (улучшить случайную кость с шансом разрушить ее)? (y/n) ") == 'y':
+            if player.dice:
+                die = random.choice(player.dice)
+                if random.random() < 0.8:
+                    die.upgrade()
+                    print(f"{Fore(226)}Кость {die} ({', '.join([rune.symbol for rune in die.runes])}{Fore(226)}) была улучшена (+1)!{Style.RESET_ALL}")
+                else:
+                    player.dice.remove(die)
+                    print(f"{Fore(124)}Кость {die} ({', '.join([rune.symbol for rune in die.runes])}{Fore(124)}) треснула и рассыпалась!{Style.RESET_ALL}")
+            else:
+                print("У вас нет костей???")
+
+class AltarRoom(Room):
+    @staticmethod
+    def enter(player):
+        print(f"\n{Fore(125)}Вы нашли кровавый алтарь...{Style.RESET_ALL}")
+        print(f"{Fore(125)}Вы можете ожертвовать 10 здоровья для случайного артефакта{Style.RESET_ALL}")
+        choice = input("Согласитться? (y/n): ")
+        if choice == 'y' and player.health > 10:
+            player.take_true_damage(10)
+            artifact = random.choice(list(Artifacts)).value
+            print(f"{Fore(125)}Вы получаете {artifact.name}!{Style.RESET_ALL}")
+            player.add_artifact(artifact)
+
+class MimicRoom(Room):
+    @staticmethod
+    def enter(player, difficulty):
+        print(f"\n{Fore(130)}Сундук оживает и атакует!{Style.RESET_ALL}")
+        mimic = Enemy(difficulty, "Мимик", flat_health=15)
+        mimic.dice = [
+            Die(6, [Runes.attack.value]*3 + [Runes.golden.value]*3),
+            Die(4, [Runes.shield.value]*4)
+        ]
+        battle = BattleSystem(player, mimic)
+        while player.is_alive() and mimic.is_alive():
+            battle.battle_round()
+        if player.is_alive():
+            artifact = random.choice(list(Artifacts)).value
+            print(f"{Fore(125)}Из мимика выпало {artifact.name}!{Style.RESET_ALL}")
+            player.add_artifact(artifact)
+
+class WindfallRoom(Room):
+    @staticmethod
+    def enter(player):
+        print(f"\n{Fore(228)}Вы нашли сокровищницу!{Style.RESET_ALL}")
+        player.gold += 20
+        player.take_heal(15)
+        print("Получено 20 золота и восстановлено 15 здоровья!")
+
 class EventRoom(Room):
+    def __init__(self, difficulty):
+        self.difficulty = difficulty
+    
     @property
     def description(self):
         return "Таинственное событие"
 
     def enter(self, player):
-        event = random.choice(['heal', 'gold', 'trap'])
+        event = random.choice(['heal', 'gold', 'trap', 'stranger', 'gamble', 'forge', 'altar', 'mimic', 'windfall'])
         match(event):
             case 'heal':
-                player.health = player.max_health
-                print(f"\n{Fore(228)}Лечебные источники востановили все здоровье!{Style.RESET_ALL}")
+                HealRoom.enter(player)
             case 'gold':
-                gold = random.randint(20, 40)
-                player.gold += gold
-                print(f"\n{Fore(228)}Найдено {gold} золота в забытой вагонетке!{Style.RESET_ALL}")
+                GoldRoom.enter(player)
             case 'trap':
-                damage = random.randint(5, 10)
-                player.take_damage(damage)
-                print(f"\n{Fore(228)}Ловушка! получено {damage} урона!{Style.RESET_ALL}")
+                TrapRoom.enter(player)
+            case 'stranger':
+                StrangerRoom.enter(player)
+            case 'gamble':
+                GambleRoom.enter(player)
+            case 'forge':
+                ForgeRoom.enter(player)
+            case 'altar':
+                AltarRoom.enter(player)
+            case 'mimic':
+                MimicRoom.enter(player, self.difficulty)
+            case 'windfall':
+                WindfallRoom.enter(player)
         return True
 
+
 class BossRoom(CombatRoom):
-    def __init__(self, difficulty_mod=5):
-        super().__init__(difficulty_mod)
+    def __init__(self, room):
+        super().__init__(room)
 
     @property
     def description(self):
@@ -417,8 +558,7 @@ class BossRoom(CombatRoom):
 
     def enter(self, player):
         print(f"\n{Back(52)}=== ПОСЛЕДНИЙ БОСС ==={Style.RESET_ALL}")
-        boss = Enemy(15, "Босс")
-        boss.dice.append(Die(10, [Runes.poison.value]*8 + [Runes.crit.value]*3))
+        boss = Boss(self.difficulty)
         battle = BattleSystem(player, boss)
         
         while player.is_alive() and boss.is_alive():

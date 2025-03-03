@@ -1,19 +1,26 @@
 import random
 from room import Room, BossRoom, CombatRoom
+from color import Back, Style
 
 class Game:
     def __init__(self, player):
         self.player = player
-        self.room_count = 0
         self.completed_rooms = 0
-        self.difficulty = 0
+    
+    @property
+    def difficulty(self):
+        return self.completed_rooms // 5
+
+    def set_player_defaults(self):
+        self.player.shield = 0
+        self.player.effects = []
 
     def generate_room_options(self):
         if self.completed_rooms >= 50:
             return [BossRoom(int(self.difficulty*1.5))]
         
         room_types = []
-        weights = [4, 3, 3, 2, 2]  # Enemy, Chest, Shop, Event
+        weights = [4, 1, 3, 5, 1]  # Enemy, Chest, Shop, Event, Workshop
         for _ in range(2):
             rt = random.choices(['enemy', 'chest', 'shop', 'event', 'workshop'], weights, k=1)[0]
             room_types.append(rt)
@@ -42,17 +49,12 @@ class Game:
             
             if self.completed_rooms >= 50:
                 if self.player.is_alive():
-                    print("\n=== ПОЗДРАВЛЯЕМ! Вы победили последнего босса! ===")
+                    print(f"\n{Back(22)}=== ПОЗДРАВЛЯЕМ! Вы победили последнего босса! ==={Style.RESET_ALL}")
                 break
             
             if not success:
-                print("\n=== ПОРАЖЕНИЕ ===")
+                print(f"\n{Back(52)}=== ПОРАЖЕНИЕ ==={Style.RESET_ALL}")
                 return
             
-            if isinstance(selected_room, CombatRoom):
-                self.player.gold += random.randint(int(10*(self.difficulty**(0.5))), int(20*(self.difficulty)**(0.5)))
-                print(f"\nВы заработали {self.player.gold} золота всего!") 
-                self.difficulty += 1
-            
             self.completed_rooms += 1
-            self.player.health = min(self.player.health + 2, self.player.max_health)
+            self.set_player_defaults()

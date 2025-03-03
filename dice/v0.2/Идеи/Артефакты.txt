@@ -1,7 +1,23 @@
     Risk-Taker’s Gambit     Rerolling a die adds +2 to its result, but you can no longer reroll that die for the rest of the battle.
-    Shard of Infinity       When a die rolls its maximum value, duplicate its effect (great for big dice like d10s)
-+   Void Sigil              Every 3 broken shield, deal 5 damage to all enemies.
-    Rune collection         Enemies take 1 damage for every unique rune type you activate in a round (encourages hybrid builds).
+    Shard of Infinity       When a die rolls its maximum value, duplicate its effect
++   shattered shield        Every 3 broken shield, deal 5 damage to all enemies.
+    Rune collection         Enemies take 1 damage for every unique rune type you activate in a round.
     Merchant’s Bargain      Shops sell items for 30% less, but enemies drop 40% less gold.
     Колючая перчатка        Можно перебрасывать кости после использования всех перебросов. Такие перебросы наносят выпавшее значение самоурона.
     Decoy coin              Можно потратить свои перебросы для переброса костей противника.
+    Кровавый фолиант        Самоурон также наносит урон выбранному врагу
+    Soul Vessel             Оставляет оставшийся после боя щит (max 10)
+                            Копирует слабейшую руну (случайную при нескольких одинаковых рунах)
+    Chrono Core             Shows outcomes of the first reroll
+    Bladeater Sigil         Heal for 50% of overkill damage
+    Hive Mind               Matching 3+ identical runes in a roll amplifies their effect
+    Oblivion Crown          Empty faces deal (upgrades*2) true damage
+    Runic Echoes            If a rune triggers its effect, there’s a 10% chance it activates again at half power.
+    Joker                   Empty faces have random effects
+    Time detonation         Attacks attach timed bomb that deal 3 damage after 2 rounds
+    Forge Hammer            Reroling a die adds +1 to its faces
+    Rune magnet             After battle, choose one rune from enemy
+    Devil pact              Double all face numbers, but dice roll twice and take the lower result.
+    Healing field           After battle 50% of remaining shield restore HP
+    Extractor               Runes now can be consumed and destroyed mid battle ()
+    Pheonix                 Revive once with 50% HP

@@ -1,4 +1,5 @@
-from signal import EntitySignal # type: ignore
+import random
+from signal import _Signal # type: ignore
 from die import Die
 from rune import Runes
 
@@ -11,9 +12,10 @@ class Entity:
         self.effects = []
         self.roll_results = []
         self.dice = []
+        self.gold = 0
         
-        self.signal_shield_broke = EntitySignal(self)
-        self.signal_self_damage = EntitySignal(self)
+        self._on_shield_broke = _Signal([])
+        self._on_self_damage = _Signal([])
     
     def set_target(self, entity):
         self.target = entity
@@ -50,7 +52,7 @@ class Entity:
     def take_damage(self, damage):
         actual = max(damage - self.shield, 0)
         if damage != 0 and self.shield != 0:
-            self.signal_shield_broke.emit()
+            self._on_shield_broke.emit(self)
         self.shield = max(self.shield - damage, 0)
         self.health -= actual
         return actual
@@ -71,7 +73,6 @@ class Player(Entity):
         ]
         self.runes = []
         self.artifacts = []
-        self.gold = 0
         self.max_dice = 8
         self.max_runes = 5
         self.max_rerolls = 1
@@ -105,16 +106,36 @@ class Player(Entity):
         return False
 
 class Enemy(Entity):
-    def __init__(self, difficulty, name="Враг", base_health=8, mult_health=4):
-        super().__init__(base_health + difficulty * mult_health)
+    def __init__(self, difficulty, name="Враг", flat_health=8, mult_health=4):
+        super().__init__(flat_health + difficulty * mult_health)
         self.name = name
 
 
 class Rat(Enemy):
     def __init__(self, difficulty):
         super().__init__(difficulty, "Крыса")
+        self.gold = int(random.randint(5, 10)*difficulty**(0.2))
         self.dice = [
-            Die(4, [Runes.poison.value]*1 + [Runes.attack.value]*3)
+            Die(4, [Runes.poison.value]*1 + [Runes.attack.value]*3, upgrades=difficulty//3),
+            Die(4, [Runes.poison.value]*1 + [Runes.shield.value]*3, upgrades=difficulty//3)
+        ]
+
+class Toad(Enemy):
+    def __init__(self, difficulty):
+        super().__init__(difficulty, "Жаба")
+        self.gold = int(random.randint(10, 20)*difficulty**(0.2))
+        self.dice = [
+            Die(4, [Runes.attack.value]*3 + [Runes.shield.value]*1, upgrades=difficulty//5),
+            Die(4, [Runes.crit.value] + [Runes.attack.value]*2 + [Runes.shield.value]*1, upgrades=difficulty//5)
+        ]
+
+class Boss(Enemy):
+    def __init__(self, difficulty):
+        super().__init__(difficulty, "Босс", flat_health=20, mult_health=8)
+        self.dice = [
+            Die(4, [Runes.shield.value]*3 + [Runes.attack.value]*1),
+            Die(4, [Runes.attack.value]*3 + [Runes.burn.value]*1),
+            Die(6, [Runes.crit.value]*1 + [Runes.poison.value] + [Runes.attack.value]*4)
         ]
 
 def get_random_rune():

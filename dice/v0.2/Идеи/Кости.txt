@@ -1,0 +1,9 @@
+Стекляная кость         Все стороны имеют Х5 значения, но ламаятся при снижении хп меньше 50%
+Утяжеленная кость       Высокии значения имеют больший шанс выпадения
+Заряжаемая кость        Выпадение стороны навсегда увеличивает значение этой стороны на 1
+Overloaded die          All sides doubled, but the dice has a 25% chance to break after use.
+Holy die                Die roll twice and take the highest result.
+Gravity Well            A dice that slows its rotation, letting players manually stop it (risk/reward timing).
+Berserker Rune          Deal bonus damage equal to missing HP%, but lose 5% max HP per use.
+Timewalker Dice         Re-rolls retain one face from the previous result (player chooses).
+Gambler's dice          3 dice with same runes, bonuses when same runes roll (less same runes on the die grants better combo bonus)

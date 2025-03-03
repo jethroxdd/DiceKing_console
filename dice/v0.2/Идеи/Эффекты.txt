@@ -1,3 +1,7 @@
-Freeze: Skip next action (delays enemy turns).
-Weakness: Next damage taken is 50% more.
-Strength: Gain +1 to all face numbers each round (stacks until combat ends).
+Cold                Reduse amount of dice that can be rolled by X, after no dice can be rolled effect changes to Freeze.
+Freeze              Cant roll any dice, lasts 1 round.
+Weakness            All dice sides has -X.
+Strength            Gain +X to all face numbers.
+Decay               50% урона наносится в следующем раунде
+Sheald Breaker      Аналаг урона, но наносит +50% урона по щиту и -50% урона по хп
+Оковы               Перебросы наносят 5 самоурона

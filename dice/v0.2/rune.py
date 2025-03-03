@@ -5,7 +5,7 @@ from color import Fore, Back, Style, Color
 '''
 Order:
 -1 - empty
- 0 - crit
+ 0 - modify rolls
  1 - shield
  2 - runes
  3 - good_effect
@@ -16,7 +16,7 @@ Order:
 @enum.unique
 class RuneType(enum.Enum):
     empty = f"-"
-    attack = f"{Fore(160)}атака{Style.RESET_ALL}"
+    attack = f"{Fore(250)}атака{Style.RESET_ALL}"
     shield = f"{Fore(23)}щит{Style.RESET_ALL}"
     heal = f"{Fore(40)}лечение{Style.RESET_ALL}"
     crit = f"{Fore(220)}крит{Style.RESET_ALL}"
@@ -63,7 +63,7 @@ class Heal(BaseRune):
 
 class Crit(BaseRune):
     def __init__(self):
-        super().__init__(RuneType.crit, 0, 2, 2)
+        super().__init__(RuneType.crit, 0, 40, 1)
         
     def apply(self, value, source):
         for i in range(len(source.roll_results)):

@@ -1,1 +1,4 @@
-    Forge room      Destroy a rune to add its effect permanently to one face.
+Merge room              Destroy a rune to add its effect permanently to one face.
+Mirror Match            Fight a copy of your own setup
+Elite enemies           Fight stronger enemies for chest reward
+Russian Roulette Room   1 in 6 chance to die or else gain a legendary item.

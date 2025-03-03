@@ -4,7 +4,7 @@ from color import Fore, Back, Style
 '''
 Order:
 -1 - empty
- 0 - crit
+ 0 - modify rolls
  1 - shield
  2 - runes
  3 - good_effect
@@ -18,6 +18,7 @@ class EffectType(enum.Enum):
     self_damage = "hidden"
     burn = f"{Fore(202)}горение{Style.RESET_ALL}"
     poison = f"{Fore(92)}яд{Style.RESET_ALL}"
+    blessing = f"{Fore(153)}благославление{Style.RESET_ALL}"
 
 class BaseEffect:
     def __init__(self, _type, value , duration, order, is_good: bool):
@@ -82,3 +83,14 @@ class SelfDamage(BaseEffect):
         
     def apply(self, entity):
         entity.take_damage(self.value)
+
+class Blessing(BaseEffect):
+    def __init__(self, value):
+        super().__init__(EffectType.blessing, value=value, duration=999, order=0, is_good=True)
+    
+    def add(self, effect):
+        self.value += effect.value
+        
+    def apply(self, entity):
+        for i in range(len(entity.roll_results)):
+            entity.roll_results[i][0] += self.value

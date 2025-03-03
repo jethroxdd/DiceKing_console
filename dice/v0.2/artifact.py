@@ -19,7 +19,8 @@ class ThornShield(BaseArtifact):
         super().__init__("Осколочный щит", "Наносит 1 урон за каждые 3 сломаных щита", 2)
     
     @staticmethod
-    def effect(source):
+    def effect(*args):
+        source = args[0]
         shield = source.shield
         damage = shield//3
         if damage:
@@ -33,7 +34,8 @@ class MasochistsWhip(BaseArtifact):
         super().__init__("Пояс терпимости", "Самоурон теперь наносит чистый урон и дает X щита", 1)
     
     @staticmethod
-    def effect(source):
+    def effect(*args):
+        source = args[0]
         effect = None
         for e in source.effects:
             if e.name == EffectType.self_damage.name:
