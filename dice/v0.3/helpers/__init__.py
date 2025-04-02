@@ -1,0 +1,1 @@
+from helpers.utility import RollResult, RollResults
