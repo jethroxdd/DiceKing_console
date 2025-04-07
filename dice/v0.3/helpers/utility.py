@@ -1,18 +1,33 @@
 from itertools import zip_longest
-from classes.entity import Player, Enemy
+from core.entity import Player, Enemy
+from ui.color import Paint, Color
 
 class RollResult:
-    def __init__(self, rune, value, source, target):
+    def __init__(self, rune, _value, source, target):
         self.rune = rune
-        self.value = value
+        self._value = _value
         self.source = source
         self.target = target
+        self.value_mult_mods = []
+        self.value_flat_mods = []
+    
+    @property
+    def value(self):
+        value = self._value
+        for mod in self.value_mult_mods:
+            value *= mod
+        for mod in self.value_flat_mods:
+            value += mod
+        return int(value)
     
     def apply(self, roll_results):
         self.rune.apply(self.value, self.source, self.target, roll_results)
     
     def __str__(self):
-        return f"{self.value} {self.rune}"
+        value = self.value
+        if self.rune.name in ["crit", "empty"]:
+            value = "-"
+        return f"{value} {self.rune}"
 
 class RollResults:
     def __init__(self):

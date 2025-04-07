@@ -1,114 +1,167 @@
 from helpers import RollResult, RollResults
 from itertools import zip_longest
 from random import shuffle
-from UI.color import Paint
-import UI
+from ui.color import Paint, Color
+from ui import get_valid_input
+import ui
 
-'''
-Battle starts
-    Choose dice
-    Raund starts
-        Dice roll
-        Rerolls
-        Select rolls order
-        Apply rolls
-    Round ends
-If someone dies battle ends
-'''
 class CombatManager:
+
     def __init__(self, player, enemy):
         self.player = player
         self.enemy = enemy
+        self.current_round = 0
         
-        self.chosen_dice = []
-        
+        # Initialize targeting
         self.player.set_target(self.enemy)
         self.enemy.set_target(self.player)
-    
-    def battle(self):
-        self.select_player_dice()
-        while not self.player.is_dead and not self.enemy.is_dead:
-            self.round()
-    
-    def round(self):
-        UI.print_stats(self.player, self.enemy)
-        
-        # Roll dice
-        roll_results = self.roll_dice()
-        
-        # Rerolls
-        pass 
-    
-        # Select order
-        self.select_order(roll_results)
-        shuffle(roll_results.enemy)
-        
-        UI.print_roll_results(roll_results, "player")
-        UI.print_roll_results(roll_results, "enemy")
-        
-        # Apply rolls
-        roll_results.apply()
-        
-        # Apply effects
-        self.player.apply_effects()
-        self.enemy.apply_effects()
-        
-        # Tick
-        self.player.tick()
-        self.enemy.tick()
-        
-        input(Paint("End of the round. Press Enter...", 220))
 
-    def select_player_dice(self):
-        # Select dice to roll from player's inventory
-        selected_dice = []
-        UI.print_availible_dice(self.player)
-        while True:
-            input_line = input(Paint("Select up to 5 dice (separate with spaces): ", 220))
-            try:
-                selected_dice = list(map(int, input_line.split()))
-                if 0 < len(selected_dice) <= self.player.max_active_dice_amount:
-                    for i in  selected_dice:
-                        self.chosen_dice.append(self.player.dice[i-1])
-                    return
-                else:
-                    raise Exception()
-            except:
-                print(Paint("Incorrect input!", 88))
+    def battle(self):
+        """Main battle loop"""
+        
+        while self._combat_continues():
+            self.current_round += 1
+            self._handle_round()
     
-    def roll_dice(self):
-        roll_results = RollResults()
-        # Roll player's dice
-        for die in self.chosen_dice:
+    def _handle_round(self):
+        """Process a single combat round"""
+        
+        ui.display_stats(self.player, self.enemy)
+        
+        # Phase 1: Dice Selection
+        self.player_dice = self._select_player_dice()
+        self.enemy_dice = self._select_enemy_dice()
+        
+        # Phase 2: Rolling and Rerolls
+        roll_results = self._roll_dice()
+        self._handle_rerolls(roll_results)
+        
+        # Phase 3: Order Resolution
+        self._resolve_activation_order(roll_results)
+        
+        # Phase 4: Effect Application
+        self._apply_roll_results(roll_results)
+        self._process_status_effects()
+        
+        # Phase 5: Cleanup
+        self._post_round_cleanup()
+
+    def _select_player_dice(self):
+        """Player selects dice for this round"""
+        ui.display_available_dice(self.player)
+        raw = input(Paint("Select dice ('Enter' to select all dice): ", Color.INPUT))
+        if raw == "":
+            selected = [i+1 for i, die in enumerate(self.player.dice)]
+        else:
+            selected = get_valid_input(
+                raw=raw,
+                validation=lambda x: self._validate_dice_selection(x),
+                transform=lambda x: list(map(int, x.split()))
+            )
+        return [self.player.dice[i-1] for i in selected]
+
+    def _select_enemy_dice(self):
+        """AI selects enemy dice (basic implementation)"""
+        return self.enemy.ai_select_dice()
+
+    def _roll_dice(self):
+        """Execute dice rolls for both sides"""
+        results = RollResults()
+        
+        # Player rolls
+        for die in self.player_dice:
             rune, value = die.roll()
-            roll_results.player.append(RollResult(rune, value, self.player, self.player.target))
+            results.player.append(RollResult(rune, value, self.player, self.enemy))
         
-        # Roll enemy's dice
-        for die in self.enemy.dice:
+        # Enemy rolls
+        for die in self.enemy_dice:
             rune, value = die.roll()
-            roll_results.enemy.append(RollResult(rune, value, self.enemy, self.enemy.target))
+            results.enemy.append(RollResult(rune, value, self.enemy, self.player))
         
-        return roll_results
-    
-    def select_order(self, roll_results):
-        UI.print_roll_results(roll_results, "player")
-        while True:
-            temp = list(range(1, len(self.chosen_dice) + 1))
-            input_line = input(Paint("Select order(separate with spaces): ", 220))
-            try:
-                selected_order = temp if input_line == "" else list(map(int, input_line.split()))
-                if len(set(selected_order)) == len(self.chosen_dice):
-                    for i in selected_order:
-                        if not i in temp:
-                            raise Exception()
-                    else:
-                        temp_arr = []
-                        for i in selected_order:
-                            temp_arr.append(roll_results.player[i-1])
-                        roll_results.player = temp_arr
-                        return
-                else:
-                    raise Exception()
-            except:
-                print(Paint("Incorrect input!", 88))
+        ui.display_roll_results(results.player, "Player")
         
+        return results
+
+    def _handle_rerolls(self, results):
+        """Manage reroll mechanics"""
+        remaining_rerolls = self.player.get_available_rerolls()
+        
+        while remaining_rerolls > 0:
+            raw = input(Paint(, Color.INPUT))
+            
+            selection = get_valid_input(
+                input_text=f"Rerolls left: {remaining_rerolls}. Choose die to reroll ('Enter' to skip): ",
+                validation=lambda x: 0 <= x <= len(results.player),
+                transform=lambda x: int(x)
+            )
+            
+            if selection == None:
+                break
+                
+            die_index = selection - 1
+            die = self.player_dice[die_index]
+            rune, value = die.roll()
+            result = RollResult(rune, value, self.player, self.enemy)
+            results.player[die_index] = result
+            remaining_rerolls -= 1
+            print(result)
+
+    def _resolve_activation_order(self, results):
+        """Determine effect activation order"""
+        # Player chooses order
+        ui.display_roll_results(results.player, "Player")
+        raw = input(Paint("Choose activation order ('Enter' to skip): ", Color.INPUT))
+        
+        if raw == "":
+            order = set(range(1, len(results.player)+1))
+        else:
+            order = get_valid_input(
+                raw=raw,
+                validation=lambda x: self._validate_activation_order(x, len(results.player)),
+                transform=lambda x: list(map(int, x.split()))
+            )
+        results.player = [results.player[i-1] for i in order]
+        
+        # Enemy uses AI-determined order
+        results.enemy = self.enemy.ai_choose_order(results.enemy)
+
+    def _apply_roll_results(self, results):
+        """Apply all combat results"""
+        # Interleave player and enemy actions
+        for p_result, e_result in zip_longest(results.player, results.enemy):
+            if p_result:
+                p_result.apply(results.player)
+            if e_result:
+                e_result.apply(results.enemy)
+        
+        ui.display_roll_results(results.player, "Player")
+        ui.display_roll_results(results.enemy, "Enemy")
+        
+
+    def _process_status_effects(self):
+        """Handle status effect ticks"""
+        self.player.process_effects()
+        self.enemy.process_effects()
+
+    def _post_round_cleanup(self):
+        """End-of-round maintenance"""
+        self.player.end_round_cleanup()
+        self.enemy.end_round_cleanup()
+        ui.display_post_round_summary(self.player, self.enemy)
+
+    # Helper methods
+    def _combat_continues(self):
+        return not self.player.is_dead and not self.enemy.is_dead
+
+    def _validate_dice_selection(self, selections):
+        return (
+            len(selections) > 0 and
+            len(selections) <= len(self.player.dice) and
+            all(1 <= s <= len(self.player.dice) for s in selections)
+        )
+
+    def _validate_activation_order(self, order, max_length):
+        return (
+            len(order) == max_length and
+            set(order) == set(range(1, max_length+1))
+        )
