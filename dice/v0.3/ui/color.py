@@ -25,12 +25,15 @@ class Color:
     UI = 8
     ERROR = 88
     INPUT = 220
+    SUCCESS = 28
+    WARNING = 202
+    HEADER = 80
     
     # Rune colors
     EMPTY = 240
     ATTACK = 124
     SHIELD = 26
-    FIRE = 202
+    FIRE = 166
     CRIT = 214
     
 class Style:

@@ -9,6 +9,12 @@ class Player(Entity):
         self.max_rerols = 100
         self.used_rerols = 0
     
+    def add_rune(self, rune):
+        self.runes.append(rune)
+    
+    def remove_rune(self, rune_id):
+        del self.runes[rune_id]
+    
     def get_available_rerolls(self):
         return self.max_rerols - self.used_rerols
     
