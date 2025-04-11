@@ -1,4 +1,5 @@
 import ui
+from ui import display_title_H1, display_title_H2, display_frame_text
 from core.die.types import SimpleDie
 from core.rune.types import Attack, Shield, Fire, Empty, Crit
 from core.entity import Player, Enemy
@@ -14,7 +15,9 @@ player = Player(
         ]
     )
 player.runes = [Attack()]*3 + [Shield()]*3 + [Fire()]
-mm = ModificationManager(player)
-mm.start_session(player.dice[0])
-# room = Battle(player, 1)
-# room.enter()
+player.gold = 1000
+
+# br = Battle(player, 1)
+# br.enter()
+room = Battle(player, 1)
+room.enter()

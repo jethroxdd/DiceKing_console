@@ -26,6 +26,7 @@ class CombatManager:
     def _handle_round(self):
         """Process a single combat round"""
         
+        print()
         ui.display_stats(self.player, self.enemy)
         
         # Phase 1: Dice Selection

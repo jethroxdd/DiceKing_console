@@ -1,4 +1,4 @@
-from ui import Paint
+from ui.color import Paint
 from core.effect import BaseEffect
 
 '''

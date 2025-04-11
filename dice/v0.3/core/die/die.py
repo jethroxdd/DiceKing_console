@@ -23,6 +23,9 @@ class Die:
         self.runes[face_id] = Empty()
         return old_rune
     
+    def upgrade(self):
+        self.upgrades += 1
+    
     def str_all(self):
         '''<type> <sides><upgrades>: <runes>'''
         return f"{self.name} d{self.sides}{"+" if self.upgrades > 0 else ""}{self.upgrades if self.upgrades != 0 else ""}: {', '.join([str(r) for r in self.runes])}"
