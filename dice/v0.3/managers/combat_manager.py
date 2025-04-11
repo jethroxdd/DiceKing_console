@@ -49,15 +49,14 @@ class CombatManager:
     def _select_player_dice(self):
         """Player selects dice for this round"""
         ui.display_available_dice(self.player)
-        raw = input(Paint("Select dice ('Enter' to select all dice): ", Color.INPUT))
-        if raw == "":
+        
+        selected = get_valid_input(
+            input_text="Select dice ('Enter' to select all dice): ",
+            validation=lambda x: self._validate_dice_selection(x),
+            transform=lambda x: list(map(int, x.split()))
+        )
+        if selected == None:
             selected = [i+1 for i, die in enumerate(self.player.dice)]
-        else:
-            selected = get_valid_input(
-                raw=raw,
-                validation=lambda x: self._validate_dice_selection(x),
-                transform=lambda x: list(map(int, x.split()))
-            )
         return [self.player.dice[i-1] for i in selected]
 
     def _select_enemy_dice(self):
@@ -86,9 +85,7 @@ class CombatManager:
         """Manage reroll mechanics"""
         remaining_rerolls = self.player.get_available_rerolls()
         
-        while remaining_rerolls > 0:
-            raw = input(Paint(, Color.INPUT))
-            
+        while remaining_rerolls > 0:            
             selection = get_valid_input(
                 input_text=f"Rerolls left: {remaining_rerolls}. Choose die to reroll ('Enter' to skip): ",
                 validation=lambda x: 0 <= x <= len(results.player),
@@ -109,17 +106,15 @@ class CombatManager:
     def _resolve_activation_order(self, results):
         """Determine effect activation order"""
         # Player chooses order
-        ui.display_roll_results(results.player, "Player")
-        raw = input(Paint("Choose activation order ('Enter' to skip): ", Color.INPUT))
-        
-        if raw == "":
+        ui.display_roll_results(results.player, "Player")     
+                
+        order = get_valid_input(
+            input_text="Choose activation order ('Enter' to skip): ",
+            validation=lambda x: self._validate_activation_order(x, len(results.player)),
+            transform=lambda x: list(map(int, x.split()))
+        )
+        if order == None:
             order = set(range(1, len(results.player)+1))
-        else:
-            order = get_valid_input(
-                raw=raw,
-                validation=lambda x: self._validate_activation_order(x, len(results.player)),
-                transform=lambda x: list(map(int, x.split()))
-            )
         results.player = [results.player[i-1] for i in order]
         
         # Enemy uses AI-determined order
@@ -147,7 +142,7 @@ class CombatManager:
         """End-of-round maintenance"""
         self.player.end_round_cleanup()
         self.enemy.end_round_cleanup()
-        ui.display_post_round_summary(self.player, self.enemy)
+        ui.display_post_round_summary(None)
 
     # Helper methods
     def _combat_continues(self):

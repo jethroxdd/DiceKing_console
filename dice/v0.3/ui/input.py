@@ -13,17 +13,18 @@ def get_valid_input(input_text, validation, transform=lambda x: x, default=None)
                     return transformed
                 raise ValueError
             except (ValueError, IndexError):
-                display_error()
+                display_error("Invalid input!")
 
-def select_from_list(options, title):
+def select_from_list(options, title, input_text="Choose option: ", default=None):
     print(title)
-    for i, text in options:
-        print(f"{i}. {text}")
+    for i, text in enumerate(options):
+        print(f"{i+1}. {text}")
     
     selection = get_valid_input(
-        input_text = "Choose option:",
-        validation = lambda x: 0 <= len(options),
-        transform = lambda x: int(x)
+        input_text = input_text,
+        validation = lambda x: 1 <= x <= len(options),
+        transform = lambda x: int(x),
+        default = default
     )
     
     return selection

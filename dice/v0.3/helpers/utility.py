@@ -47,3 +47,14 @@ class RollResults:
                 player_result.apply(self.player)
             elif enemy_result:
                 enemy_result.apply(self.enemy)
+
+class EntityRoundStatistics:
+    def __init__(self):
+        self.dealt_damage = 0
+        self.recived_damage = 0
+        self.taken_damage = 0
+        self.blocked_damage = 0
+
+class RoundStatistics:
+    def __init__(self):
+        pass
