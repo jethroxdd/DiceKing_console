@@ -1,6 +1,7 @@
 from core.rune import BaseRune
 import core.effect.types as EffectTypes
 from ui.color import Paint, Color
+from core import Rarity
 '''
 Order:
 0 - utility
@@ -11,6 +12,8 @@ Order:
 '''
 
 class Empty(BaseRune):
+    cost = 0
+    rarity = 0
     def __init__(self):
         super().__init__("empty", 0)
     
@@ -21,6 +24,8 @@ class Empty(BaseRune):
         return Paint("empty", Color.EMPTY)
 
 class Attack(BaseRune):
+    cost = 10
+    rarity = Rarity.ordinary
     def __init__(self):
         super().__init__("attack", 4)
     
@@ -31,6 +36,8 @@ class Attack(BaseRune):
         return Paint("attack", Color.ATTACK)
 
 class Shield(BaseRune):
+    cost = 10
+    rarity = Rarity.ordinary
     def __init__(self):
         super().__init__("shield", 1)
     
@@ -41,6 +48,8 @@ class Shield(BaseRune):
         return Paint("shield", Color.SHIELD)
 
 class Fire(BaseRune):
+    cost = 40
+    rarity = Rarity.epic
     def __init__(self):
         super().__init__("fire", 1)
     
@@ -52,6 +61,8 @@ class Fire(BaseRune):
         return Paint("fire", Color.FIRE)
 
 class Crit(BaseRune):
+    cost = 50
+    rarity = Rarity.legendary
     def __init__(self):
         super().__init__("crit", 0)
     

@@ -1,5 +1,5 @@
 from core.entity import Entity
-from core.die.types import SimpleDie
+from core.die.types import Simple
 from core.rune.types import Attack, Shield
 from random import shuffle
 class Enemy(Entity):
@@ -19,8 +19,22 @@ class Enemy(Entity):
 
 class Rat(Enemy):
     def __init__(self, level):
-        super().__init__("Rat", 10 + 4*level, [SimpleDie(4, [Shield()]*3 + [Attack()]*1)])
+        super().__init__(
+            "Rat",
+            10 + 4*level, 
+            [
+                Simple(4, [Shield()]*3 + [Attack()]*1), 
+                Simple(4, [Shield()]*3 + [Attack()]*1)
+                ]
+            )
 
 class Slime(Enemy):
     def __init__(self, level):
-        super().__init__("Slime", 10 + 4*level, [SimpleDie(4, [Attack()]*2 + [Shield()]*1)])
+        super().__init__(
+            "Slime", 
+            10 + 4*level, 
+            [
+                Simple(4, [Attack()]*3 + [Shield()]*1),
+                Simple(4, [Attack()]*3 + [Shield()]*1)
+                ]
+            )

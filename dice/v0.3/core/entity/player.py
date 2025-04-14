@@ -6,8 +6,12 @@ class Player(Entity):
         super().__init__("Player", health, dice)
         self.runes = []
         self.max_active_dice_amount = 5
-        self.max_rerols = 100
+        self.max_rerols = 1
         self.used_rerols = 0
+    
+    @property
+    def is_alive(self):
+        return self.health > 0
     
     def add_rune(self, rune):
         self.runes.append(rune)

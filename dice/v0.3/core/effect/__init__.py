@@ -1,1 +1,1 @@
-from core.effect.effect import BaseEffect
+from .effect import BaseEffect

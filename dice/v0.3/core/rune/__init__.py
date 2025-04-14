@@ -1,2 +1,2 @@
-from core.rune.rune import BaseRune
+from .rune import BaseRune
 import core.rune.types as types

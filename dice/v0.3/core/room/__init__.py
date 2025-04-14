@@ -1,1 +1,1 @@
-from core.room.room import Room
+from .room import Room

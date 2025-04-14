@@ -1,9 +1,51 @@
-from helpers import RollResult, RollResults
 from itertools import zip_longest
-from random import shuffle
-from ui.color import Paint, Color
-from ui import get_valid_input
-import ui
+from ui import get_valid_input, display
+
+class RollResult:
+    def __init__(self, rune, _value, source, target):
+        self.rune = rune
+        self._value = _value
+        self.source = source
+        self.target = target
+        self.value_mult_mods = []
+        self.value_flat_mods = []
+    
+    @property
+    def value(self):
+        value = self._value
+        for mod in self.value_mult_mods:
+            value *= mod
+        for mod in self.value_flat_mods:
+            value += mod
+        return int(value)
+    
+    def apply(self, roll_results):
+        self.rune.apply(self.value, self.source, self.target, roll_results)
+    
+    def __str__(self):
+        value = self.value
+        if self.rune.name in ["crit", "empty"]:
+            value = "-"
+        return f"{value} {self.rune}"
+
+class RollResults:
+    def __init__(self):
+        self.player = []
+        self.enemy = []
+    
+    def apply(self):
+        for player_result, enemy_result in zip_longest(self.player, self.enemy):
+            if player_result and enemy_result:
+                if player_result.rune.order < enemy_result.rune.order:
+                    player_result.apply(self.player)
+                    enemy_result.apply(self.enemy)
+                else:
+                    enemy_result.apply(self.enemy)
+                    player_result.apply(self.player)
+            elif player_result:
+                player_result.apply(self.player)
+            elif enemy_result:
+                enemy_result.apply(self.enemy)
 
 class CombatManager:
 
@@ -25,8 +67,7 @@ class CombatManager:
     
     def _handle_round(self):
         """Process a single combat round"""
-        
-        ui.display_stats(self.player, self.enemy)
+        display.stats(self.player, self.enemy)
         
         # Phase 1: Dice Selection
         self.player_dice = self._select_player_dice()
@@ -48,14 +89,15 @@ class CombatManager:
 
     def _select_player_dice(self):
         """Player selects dice for this round"""
-        ui.display_available_dice(self.player)
+        display.available_dice(self.player)
         
         selected = get_valid_input(
             input_text="Select dice ('Enter' to select all dice): ",
             validation=lambda x: self._validate_dice_selection(x),
-            transform=lambda x: list(map(int, x.split()))
+            transform=lambda x: list(map(int, x.split())),
+            default = False
         )
-        if selected == None:
+        if selected == False:
             selected = [i+1 for i, die in enumerate(self.player.dice)]
         return [self.player.dice[i-1] for i in selected]
 
@@ -77,7 +119,7 @@ class CombatManager:
             rune, value = die.roll()
             results.enemy.append(RollResult(rune, value, self.enemy, self.player))
         
-        ui.display_roll_results(results.player, "Player")
+        display.roll_results(results.player, "Player")
         
         return results
 
@@ -89,10 +131,11 @@ class CombatManager:
             selection = get_valid_input(
                 input_text=f"Rerolls left: {remaining_rerolls}. Choose die to reroll ('Enter' to skip): ",
                 validation=lambda x: 0 <= x <= len(results.player),
-                transform=lambda x: int(x)
+                transform=lambda x: int(x),
+                default = False
             )
             
-            if selection == None:
+            if selection == False:
                 break
                 
             die_index = selection - 1
@@ -106,14 +149,15 @@ class CombatManager:
     def _resolve_activation_order(self, results):
         """Determine effect activation order"""
         # Player chooses order
-        ui.display_roll_results(results.player, "Player")     
+        display.roll_results(results.player, "Player")     
                 
         order = get_valid_input(
             input_text="Choose activation order ('Enter' to skip): ",
             validation=lambda x: self._validate_activation_order(x, len(results.player)),
-            transform=lambda x: list(map(int, x.split()))
+            transform=lambda x: list(map(int, x.split())),
+            default = False
         )
-        if order == None:
+        if order == False:
             order = set(range(1, len(results.player)+1))
         results.player = [results.player[i-1] for i in order]
         
@@ -122,15 +166,9 @@ class CombatManager:
 
     def _apply_roll_results(self, results):
         """Apply all combat results"""
-        # Interleave player and enemy actions
-        for p_result, e_result in zip_longest(results.player, results.enemy):
-            if p_result:
-                p_result.apply(results.player)
-            if e_result:
-                e_result.apply(results.enemy)
-        
-        ui.display_roll_results(results.player, "Player")
-        ui.display_roll_results(results.enemy, "Enemy")
+        results.apply()        
+        display.roll_results(results.player, "Player")
+        display.roll_results(results.enemy, "Enemy")
         
 
     def _process_status_effects(self):
@@ -142,7 +180,6 @@ class CombatManager:
         """End-of-round maintenance"""
         self.player.end_round_cleanup()
         self.enemy.end_round_cleanup()
-        ui.display_post_round_summary(None)
 
     # Helper methods
     def _combat_continues(self):

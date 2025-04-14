@@ -1,5 +1,5 @@
 from enum import Enum
-from ui import display_error, display_warning, display_success
+from ui import display
 from ui import select_from_list, get_valid_input
 
 class ModificationType(Enum):
@@ -14,7 +14,7 @@ class ModificationResult(Enum):
     EXIT = 3
 
 class ModificationManager:
-    BASE_UPGRADE_COST = 50
+    BASE_UPGRADE_COST = 25
 
     def __init__(self, player):
         self.player = player
@@ -29,73 +29,90 @@ class ModificationManager:
         return self._main_menu()
 
     def _main_menu(self):
-        options = {
+        options = [
             "Attach Rune",
             "Remove Rune",
             "Upgrade Die",
-        }
+        ]
         
         while True:
-            print(self.current_session.die.str_all())
-            choice = select_from_list(options, "Modification Menu ('Enter' to exit): ", default=ModificationResult.EXIT)
+            print()
+            display.message(f"Player gold: {self.player.gold}")
+            display.message(self.current_session.die.str_all())
+            choice = select_from_list(options, "Modification Menu ('Enter' to exit): ", default=ModificationType.EXIT)
             choice = ModificationType(choice)
-            result = ModificationResult.SUCCESS
             match choice:
                 case ModificationType.ATTACH:
-                    result = self._attach_rune_flow()
+                    self._attach_rune_flow()
                 case ModificationType.REMOVE:
-                    result = self._remove_rune_flow()
+                    self._remove_rune_flow()
+                case ModificationType.UPGRADE_DIE:
+                    self._upgrade_die_flow()
                 case ModificationResult.EXIT:
                     return ModificationResult.EXIT
-                # case ModificationType.UPGRADE_DIE:
-                #     result = self._upgrade_die_flow()
-                
-            if result == ModificationResult.FAILURE:
-                display_error("Something went wrong!")
-                
 
     def _attach_rune_flow(self):
+        print()
         rune_id = self._select_rune(self.player.runes)
-        print(rune_id)
-        if rune_id == None:
+        if rune_id == False:
             return ModificationResult.EXIT
         
         face = self._select_face(self.current_session.die)
-        if face == None:
+        if face == False:
             return ModificationResult.EXIT
 
-        rune = self.player.runes[rune_id]
-        return self.attach_rune(self.current_session.die, rune, face)
+        rune = self.player.runes[rune_id-1]
+        return self.attach_rune(self.current_session.die, rune, face-1)
 
     def attach_rune(self, die, rune, face_id: int):
         _rune = die.attach_rune(rune, face_id)
         if _rune.name == "empty":
-            display_success(f"Attached {rune} rune to the {face_id+1} side")
+            display.success(f"Attached {rune} rune to the {face_id+1} side")
         else:
-            display_success(f"Replaced {_rune} with {rune} at {face_id+1} side")
+            display.success(f"Replaced {_rune} with {rune} at {face_id+1} side")
             self.player.add_rune(_rune)
         return ModificationResult.SUCCESS
     
     def _remove_rune_flow(self):
+        print()
         face = self._select_face(self.current_session.die)
-        if not face:
+        if face == False:
             return ModificationResult.EXIT
         
-        return self.remove_rune(self.current_session.die, face)
+        return self.remove_rune(self.current_session.die, face-1)
 
     def remove_rune(self, die, face_id: int):
         _rune = die.remove_rune(face_id)
         if _rune.name == "empty":
-            display_error("Cant remove rune frome empty side!")
+            display.error("Cant remove rune frome empty side!")
             return ModificationResult.FAILURE
         self.player.add_rune(_rune)
-        display_success(f"Removed {_rune} from {face_id+1} side.")
+        display.success(f"Removed {_rune} from {face_id+1} side.")
         return ModificationResult.SUCCESS
+    
+    def _upgrade_die_flow(self):
+        die = self.current_session.die
+        cost = (die.upgrades+1)*self.BASE_UPGRADE_COST
+        display.message(f"{die} has {die.upgrades} upgrades. Next upgrade will cost {cost}.")
+        if self.player.gold < cost:
+            display.warning("Not enough money")
+            return ModificationResult.FAILURE
+        choice = get_valid_input(
+            input_text="Upgrade die? (y/n): ",
+            validation=lambda x: x in ['y', 'n']
+        )
+        if choice == 'y':
+            self.player.gold -= cost
+            die.upgrade()
+            display.message("Succesfully upgraded die")
+            return ModificationResult.SUCCESS
+
+        return ModificationResult.EXIT
 
     def _select_rune(self, runes):
         options = [str(r) for r in runes]
-        return select_from_list(options, "Availible runes: ", "Choose rune ('Enter' to exit): ")-1
+        return select_from_list(options, "Availible runes: ", "Choose rune ('Enter' to exit): ", default=False)
 
     def _select_face(self, die):
         options = [str(r) for r in die.runes]
-        return select_from_list(options, f"{die} faces:", "Choose face ('Enter' to exit): ")-1
+        return select_from_list(options, f"{die} faces:", "Choose face ('Enter' to exit): ", default=False)

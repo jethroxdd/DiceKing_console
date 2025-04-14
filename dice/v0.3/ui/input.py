@@ -1,11 +1,11 @@
-from ui import display_error
+from ui import display
 from ui.color import Paint, Color
 
 def get_valid_input(input_text, validation, transform=lambda x: x, default=None):
         """Generic input validation handler"""
         while True:
             raw = input(Paint(input_text, Color.INPUT))
-            if raw == "":
+            if raw == "" and default != None:
                 return default
             try:
                 transformed = transform(raw)
@@ -13,7 +13,7 @@ def get_valid_input(input_text, validation, transform=lambda x: x, default=None)
                     return transformed
                 raise ValueError
             except (ValueError, IndexError):
-                display_error("Invalid input!")
+                display.error("Invalid input!")
 
 def select_from_list(options, title, input_text="Choose option: ", default=None):
     print(title)

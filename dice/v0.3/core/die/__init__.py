@@ -1,2 +1,2 @@
-from core.die.die import Die
+from .die import Die
 import core.die.types as types

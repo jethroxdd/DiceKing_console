@@ -22,7 +22,7 @@ class Color:
     WHITE = 7
     
     # Display colors
-    UI = 8
+    UI = 7
     ERROR = 88
     INPUT = 220
     SUCCESS = 28
