@@ -2,9 +2,10 @@ from itertools import zip_longest
 from ui import get_valid_input, display
 
 class RollResult:
-    def __init__(self, rune, _value, source, target):
+    def __init__(self, rune, _value, raw, source, target):
         self.rune = rune
         self._value = _value
+        self.raw = raw
         self.source = source
         self.target = target
         self.value_mult_mods = []
@@ -19,6 +20,7 @@ class RollResult:
             value += mod
         return int(value)
     
+    
     def apply(self, roll_results):
         self.rune.apply(self.value, self.source, self.target, roll_results)
     
@@ -26,7 +28,7 @@ class RollResult:
         value = self.value
         if self.rune.name in ["crit", "empty"]:
             value = "-"
-        return f"{value} {self.rune}"
+        return f"({self.raw}) {value} {self.rune}"
 
 class RollResults:
     def __init__(self):
@@ -63,6 +65,8 @@ class CombatManager:
         
         while self._combat_continues():
             self.current_round += 1
+            print()
+            display.H2(f"Round {self.current_round}")
             self._handle_round()
     
     def _handle_round(self):
@@ -70,17 +74,21 @@ class CombatManager:
         display.stats(self.player, self.enemy)
         
         # Phase 1: Dice Selection
+        print()
         self.player_dice = self._select_player_dice()
         self.enemy_dice = self._select_enemy_dice()
         
         # Phase 2: Rolling and Rerolls
+        print()
         roll_results = self._roll_dice()
         self._handle_rerolls(roll_results)
         
         # Phase 3: Order Resolution
+        print()
         self._resolve_activation_order(roll_results)
         
         # Phase 4: Effect Application
+        print()
         self._apply_roll_results(roll_results)
         self._process_status_effects()
         
@@ -111,13 +119,13 @@ class CombatManager:
         
         # Player rolls
         for die in self.player_dice:
-            rune, value = die.roll()
-            results.player.append(RollResult(rune, value, self.player, self.enemy))
+            rune, value, raw = die.roll()
+            results.player.append(RollResult(rune, value, raw, self.player, self.enemy))
         
         # Enemy rolls
         for die in self.enemy_dice:
-            rune, value = die.roll()
-            results.enemy.append(RollResult(rune, value, self.enemy, self.player))
+            rune, value, raw = die.roll()
+            results.enemy.append(RollResult(rune, value, raw, self.enemy, self.player))
         
         display.roll_results(results.player, "Player")
         
@@ -140,8 +148,8 @@ class CombatManager:
                 
             die_index = selection - 1
             die = self.player_dice[die_index]
-            rune, value = die.roll()
-            result = RollResult(rune, value, self.player, self.enemy)
+            rune, value, raw = die.roll()
+            result = RollResult(rune, value, raw, self.player, self.enemy)
             results.player[die_index] = result
             remaining_rerolls -= 1
             print(result)

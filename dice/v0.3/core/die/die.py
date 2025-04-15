@@ -1,4 +1,5 @@
 from core.rune.types import Empty
+from random import randint
 
 class Die:
     def __init__(self, name, sides: int, runes=None, upgrades=None):
@@ -38,6 +39,12 @@ class Die:
     
     def upgrade(self):
         self.upgrades += 1
+    
+    def roll(self):
+        raw = randint(0, self.sides-1) + 1
+        value =  raw + self.upgrades
+        rune = self.runes[raw-1]
+        return rune, value, raw
     
     def __str__(self):
         '''<type> <sides><upgrades>: <runes>'''

@@ -23,6 +23,14 @@ class Entity:
     def take_true_damage(self, damage):
         self.health = max(0, self.health - damage)
     
+    def take_self_damage(self, damage):
+        actual = max(0, damage - self.shield)
+        self.shield = max(0, self.shield - damage)
+        self.health = max(0, self.health - actual)
+    
+    def take_true_self_damage(self, damage):
+        self.health = max(0, self.health - damage)
+    
     def take_heal(self, heal):
         self.health = min(self.max_health, self.health + heal)
     

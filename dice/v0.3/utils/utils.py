@@ -15,3 +15,15 @@ def len_without_color(text):
 
 def random_items_from_pool(pool, k=1):
     return choices(pool, weights=[i.rarity for i in pool], k=k)[0]
+
+class Signal:
+    def __init__(self, player):
+        self.player = player
+        self.functions = []
+    
+    def add(self, func):
+        self.functions += [func]
+    
+    def emit(self, *args, **kwargs):
+        for fun in self.functions:
+            fun(*args, **kwargs)

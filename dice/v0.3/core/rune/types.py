@@ -72,3 +72,7 @@ class Crit(BaseRune):
         
     def __str__(self):
         return Paint("crit", Color.CRIT)
+    
+    
+SHOP_POOL_RUNES = [Attack, Shield, Crit, Fire]
+CHEST_POOL_RUNES = SHOP_POOL_RUNES

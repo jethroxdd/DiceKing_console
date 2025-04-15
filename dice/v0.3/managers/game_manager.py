@@ -22,51 +22,55 @@ class GameManager:
     
     @property
     def difficulty(self):
-        return (self.stage)*5 + (self.room)//2
+        return (self.stage-1)*5 + (self.room)//2
     
     def start_game(self):
+        display.game_title()
+        display.H2(f"STAGE {self.stage} START")
         while self.player.is_alive:
             self._game_flow()
 
     def _game_flow(self):
-         # Main game loop
-        while self.room <= 10 and self.player.is_alive:
-            # Получение вариантов комнат
-            room_options = self.room_manager.get_room_options(
-                current_stage=self.stage,
-                current_room=self.room,
-                difficulty=self.difficulty
-            )
-            
-            # Отображение выбора комнат
-            chosen_room = self._choose_room(room_options)
-            
-            # Обработка выбранной комнаты
-            chosen_room.enter()
-            
-            # Проверка на босса
-            if self.room == 10:
-                self._handle_boss_room()
-                self._handle_modification_room()
-                self._next_stage()
-            else:
-                self.room += 1
-                self.total_rooms += 1
+        # Main game loop
+        # Получение вариантов комнат
+        room_options = self.room_manager.get_room_options(
+            current_stage=self.stage,
+            current_room=self.room,
+            difficulty=self.difficulty
+        )
+        
+        # Отображение выбора комнат
+        chosen_room = self._choose_room(room_options)
+        
+        # Обработка выбранной комнаты
+        chosen_room.enter()
+        
+        # Проверка на босса
+        if self.room == 10:
+            self._handle_boss_room()
+            if not self.player.is_alive:
+                return
+            self._handle_modification_room()
+            self._next_stage()
+        else:
+            self.room += 1
+            self.total_rooms += 1
     
     def _choose_room(self, room_options: list):
         options = []
-        for i, k in enumerate(room_options):
-            options.append(f"{i+1}. {k.name}")
-        display.frame_text(text=options, title="Room options:", min_width=25)
-        selection = input.get_valid_input(
-            input_text="Choose room: ",
-            validation=lambda x: 1 <= x <= len(options),
-            transform=lambda x: int(x)
-        )
-        return room_options[selection-1]
+        for room, room_type in room_options:
+            if room_type == "event":
+                options += ["Event"]
+            elif room_type == "chest":
+                options += ["Chest"]
+            else:
+                options += [str(room.name)]
+        print()
+        selection = input.select_from_list(options=options, title=f"Room {self.room} options:", input_text="Select room: ", framed=True)
+        return room_options[selection-1][0]
     
     def _handle_boss_room(self):
-        self.room_manager.boss_battle(self.stage)
+        self.room_manager.boss_battle(self.stage, self.difficulty)
     
     def _handle_modification_room(self):
         self.room_manager.modification_menu()
@@ -74,7 +78,7 @@ class GameManager:
     def _next_stage(self):
         self.stage += 1
         self.room = 1
-        print(f"\n=== STAGE {self.stage} START ===")
+        display.H2(f"STAGE {self.stage} START")
         self._apply_stage_modifiers()
     
     def _apply_stage_modifiers(self):

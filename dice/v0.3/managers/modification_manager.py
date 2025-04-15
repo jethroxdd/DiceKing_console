@@ -38,8 +38,8 @@ class ModificationManager:
         while True:
             print()
             display.message(f"Player gold: {self.player.gold}")
-            display.message(self.current_session.die.str_all())
-            choice = select_from_list(options, "Modification Menu ('Enter' to exit): ", default=ModificationType.EXIT)
+            display.message(self.current_session.die)
+            choice = select_from_list(options, "Modification Menu: ", input_text="Choose option ('Enter' to exit): ", default=ModificationType.EXIT, framed=True)
             choice = ModificationType(choice)
             match choice:
                 case ModificationType.ATTACH:
@@ -48,7 +48,7 @@ class ModificationManager:
                     self._remove_rune_flow()
                 case ModificationType.UPGRADE_DIE:
                     self._upgrade_die_flow()
-                case ModificationResult.EXIT:
+                case ModificationType.EXIT:
                     return ModificationResult.EXIT
 
     def _attach_rune_flow(self):
@@ -71,43 +71,34 @@ class ModificationManager:
         else:
             display.success(f"Replaced {_rune} with {rune} at {face_id+1} side")
             self.player.add_rune(_rune)
+        self.player.remove_rune_by_value(rune)
         return ModificationResult.SUCCESS
     
     def _remove_rune_flow(self):
         print()
-        face = self._select_face(self.current_session.die)
-        if face == False:
+        faces = self._select_faces(self.current_session.die)
+        if faces == False:
             return ModificationResult.EXIT
         
-        return self.remove_rune(self.current_session.die, face-1)
+        return self.remove_rune(self.current_session.die, faces)
 
-    def remove_rune(self, die, face_id: int):
-        _rune = die.remove_rune(face_id)
-        if _rune.name == "empty":
-            display.error("Cant remove rune frome empty side!")
-            return ModificationResult.FAILURE
-        self.player.add_rune(_rune)
-        display.success(f"Removed {_rune} from {face_id+1} side.")
-        return ModificationResult.SUCCESS
+    def remove_rune(self, die, face_ids: int):
+        for face_id in face_ids: 
+            _rune = die.remove_rune(face_id-1)
+            if _rune.name == "empty":
+                continue
+            self.player.add_rune(_rune)
     
     def _upgrade_die_flow(self):
         die = self.current_session.die
         cost = (die.upgrades+1)*self.BASE_UPGRADE_COST
-        display.message(f"{die} has {die.upgrades} upgrades. Next upgrade will cost {cost}.")
         if self.player.gold < cost:
             display.warning("Not enough money")
             return ModificationResult.FAILURE
-        choice = get_valid_input(
-            input_text="Upgrade die? (y/n): ",
-            validation=lambda x: x in ['y', 'n']
-        )
-        if choice == 'y':
-            self.player.gold -= cost
-            die.upgrade()
-            display.message("Succesfully upgraded die")
-            return ModificationResult.SUCCESS
-
-        return ModificationResult.EXIT
+        self.player.gold -= cost
+        die.upgrade()
+        display.message("Succesfully upgraded die")
+        return ModificationResult.SUCCESS
 
     def _select_rune(self, runes):
         options = [str(r) for r in runes]
@@ -116,3 +107,23 @@ class ModificationManager:
     def _select_face(self, die):
         options = [str(r) for r in die.runes]
         return select_from_list(options, f"{die} faces:", "Choose face ('Enter' to exit): ", default=False)
+    
+    
+    def _select_faces(self, die):
+        options = [str(r) for r in die.runes]
+        display.options(options)
+        selected = get_valid_input(
+            input_text="Select runes ('Enter' to exit): ",
+            validation=lambda x: self._validate_runes_selection(x),
+            transform=lambda x: list(map(int, x.split())),
+            default = False
+        )
+        return selected
+    
+    def _validate_runes_selection(self, selections):
+        die = self.current_session.die
+        return (
+            len(selections) > 0 and
+            len(selections) <= die.sides and
+            all(1 <= s <= die.sides for s in selections)
+        )

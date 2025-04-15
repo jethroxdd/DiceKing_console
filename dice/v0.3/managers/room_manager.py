@@ -1,6 +1,6 @@
 from random import choice
-import core.room.types as RoomTypes
-import core.entity.enemy as EnemyTypes
+from core.room.types import STANDARD_POOL, EVENT_POOL, CHEST_POOL, Battle, ModificationRoom, Boss
+from core.entity.enemy import ENEMY_POOL
 import enum
 
 # Generate rooms to choose from
@@ -8,18 +8,12 @@ import enum
 
 class RoomPools:
     types = ["standard", "event", "chest"]
-    standard = [RoomTypes.Battle, RoomTypes.Shop]
-    event = []
-    chest = []
+    standard = STANDARD_POOL
+    event = EVENT_POOL
+    chest = CHEST_POOL
 
 class EnemyPools:
-    stage = [
-        [EnemyTypes.Rat, EnemyTypes.Slime],
-        [EnemyTypes.Rat, EnemyTypes.Slime],
-        [EnemyTypes.Rat],
-        [EnemyTypes.Rat],
-        [EnemyTypes.Rat]
-    ]
+    stage = ENEMY_POOL
 
 class RoomManager:
     def __init__(self, player):
@@ -30,14 +24,15 @@ class RoomManager:
         for _ in range(3):
             enemy = choice(EnemyPools.stage[current_stage-1])(difficulty)
             # room_type = choice(RoomPools.types)
-            room_type = "standard"
+            room_type = choice(RoomPools.types)
             room = choice(getattr(RoomPools, room_type))(self.player, difficulty, enemy=enemy)
-            options += [room]
+            options += [[room, room_type]]
         return options
     
-    def boss_battle(self, current_stage):
-        room = RoomTypes.Battle(self.player, current_stage+5, enemy=EnemyTypes.Rat(current_stage+5))
-        room.enter
+    def boss_battle(self, current_stage, difficulty):
+        room = Boss(self.player, difficulty)
+        room.enter()
     
     def modification_menu(self):
-        pass
+        mod_room = ModificationRoom(self.player, 1)
+        mod_room.enter()
