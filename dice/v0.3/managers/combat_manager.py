@@ -1,34 +1,24 @@
 from itertools import zip_longest
+from utils import Value
 from ui import get_valid_input, display
 
 class RollResult:
-    def __init__(self, rune, _value, raw, source, target):
+    SPECIAL_RUNE_NAMES = {"crit", "empty"}
+    
+    def __init__(self, rune, value, raw, source, target):
         self.rune = rune
-        self._value = _value
+        self.value = Value(value)
         self.raw = raw
         self.source = source
         self.target = target
-        self.value_mult_mods = []
-        self.value_flat_mods = []
     
-    @property
-    def value(self):
-        value = self._value
-        for mod in self.value_mult_mods:
-            value *= mod
-        for mod in self.value_flat_mods:
-            value += mod
-        return int(value)
-    
-    
-    def apply(self, roll_results):
-        self.rune.apply(self.value, self.source, self.target, roll_results)
+    def apply(self, roll_results, i):
+        self.rune.apply(self.value, self.source, self.target, roll_results, i)
     
     def __str__(self):
-        value = self.value
-        if self.rune.name in ["crit", "empty"]:
-            value = "-"
-        return f"({self.raw}) {value} {self.rune}"
+        """Formats roll result for display"""
+        display_value = "-" if self.rune.name in self.SPECIAL_RUNE_NAMES else int(self.value)
+        return f"({self.raw}) {display_value} {self.rune}"
 
 class RollResults:
     def __init__(self):
@@ -36,18 +26,31 @@ class RollResults:
         self.enemy = []
     
     def apply(self):
-        for player_result, enemy_result in zip_longest(self.player, self.enemy):
-            if player_result and enemy_result:
-                if player_result.rune.order < enemy_result.rune.order:
-                    player_result.apply(self.player)
-                    enemy_result.apply(self.enemy)
-                else:
-                    enemy_result.apply(self.enemy)
-                    player_result.apply(self.player)
-            elif player_result:
-                player_result.apply(self.player)
-            elif enemy_result:
-                enemy_result.apply(self.enemy)
+        """Process all results in priority order"""
+        for i, (player_res, enemy_res) in enumerate(zip_longest(self.player, self.enemy, fillvalue=None)):
+            self._process_result_pair(player_res, enemy_res, i)
+    
+    def _process_result_pair(self, player_res, enemy_res, index: int):
+        """Handles a pair of player/enemy results with priority comparison"""
+        if player_res and enemy_res:
+            self._handle_priority_results(player_res, enemy_res, index)
+        else:
+            self._apply_result(player_res, self.player, index)
+            self._apply_result(enemy_res, self.enemy, index)
+    
+    def _handle_priority_results(self, player_res: RollResult, enemy_res: RollResult, index: int):
+        """Applies results based on rune priority"""
+        if player_res.rune.priority < enemy_res.rune.priority:
+            self._apply_result(player_res, self.player, index)
+            self._apply_result(enemy_res, self.enemy, index)
+        else:
+            self._apply_result(enemy_res, self.enemy, index)
+            self._apply_result(player_res, self.player, index)
+    
+    def _apply_result(self, result, results_list, index: int):
+        """Applies a single result if it exists"""
+        if result:
+            result.apply(results_list, index)
 
 class CombatManager:
 
@@ -103,56 +106,52 @@ class CombatManager:
             input_text="Select dice ('Enter' to select all dice): ",
             validation=lambda x: self._validate_dice_selection(x),
             transform=lambda x: list(map(int, x.split())),
-            default = False
-        )
-        if selected == False:
-            selected = [i+1 for i, die in enumerate(self.player.dice)]
+            default = [i+1 for i, die in enumerate(self.player.dice)]
+        )   
         return [self.player.dice[i-1] for i in selected]
 
     def _select_enemy_dice(self):
         """AI selects enemy dice (basic implementation)"""
         return self.enemy.ai_select_dice()
 
-    def _roll_dice(self):
+    def _roll_dice(self) -> RollResults:
         """Execute dice rolls for both sides"""
         results = RollResults()
-        
-        # Player rolls
-        for die in self.player_dice:
-            rune, value, raw = die.roll()
-            results.player.append(RollResult(rune, value, raw, self.player, self.enemy))
-        
-        # Enemy rolls
-        for die in self.enemy_dice:
-            rune, value, raw = die.roll()
-            results.enemy.append(RollResult(rune, value, raw, self.enemy, self.player))
-        
+        self._roll_combatant_dice(self.player, self.player_dice, results.player)
+        self._roll_combatant_dice(self.enemy, self.enemy_dice, results.enemy)
         display.roll_results(results.player, "Player")
-        
         return results
+    
+    def _roll_combatant_dice(self, combatant, dice_list, results_container):
+        """Roll dice for a combatant and store results"""
+        for die in dice_list:
+            rune, value, raw = die.roll()
+            results_container.append(RollResult(rune, value, raw, combatant, combatant.target))
 
-    def _handle_rerolls(self, results):
+    def _handle_rerolls(self, results: RollResults):
         """Manage reroll mechanics"""
-        remaining_rerolls = self.player.get_available_rerolls()
+        remaining_rerolls = self.player.rerolls
         
-        while remaining_rerolls > 0:            
+        while remaining_rerolls > 0:
             selection = get_valid_input(
                 input_text=f"Rerolls left: {remaining_rerolls}. Choose die to reroll ('Enter' to skip): ",
                 validation=lambda x: 0 <= x <= len(results.player),
-                transform=lambda x: int(x),
-                default = False
+                transform=int,
+                default=False
             )
             
-            if selection == False:
+            if not selection:
                 break
                 
-            die_index = selection - 1
-            die = self.player_dice[die_index]
-            rune, value, raw = die.roll()
-            result = RollResult(rune, value, raw, self.player, self.enemy)
-            results.player[die_index] = result
+            self._perform_reroll(results, selection - 1)
             remaining_rerolls -= 1
-            print(result)
+    
+    def _perform_reroll(self, results: RollResults, index: int):
+        """Execute a single reroll operation"""
+        die = self.player_dice[index]
+        rune, value, raw = die.roll()
+        results.player[index] = RollResult(rune, value, raw, self.player, self.enemy)
+        print(results.player[index])
 
     def _resolve_activation_order(self, results):
         """Determine effect activation order"""
@@ -163,10 +162,8 @@ class CombatManager:
             input_text="Choose activation order ('Enter' to skip): ",
             validation=lambda x: self._validate_activation_order(x, len(results.player)),
             transform=lambda x: list(map(int, x.split())),
-            default = False
+            default = set(range(1, len(results.player)+1))
         )
-        if order == False:
-            order = set(range(1, len(results.player)+1))
         results.player = [results.player[i-1] for i in order]
         
         # Enemy uses AI-determined order
@@ -181,23 +178,24 @@ class CombatManager:
 
     def _process_status_effects(self):
         """Handle status effect ticks"""
-        self.player.process_effects()
-        self.enemy.process_effects()
+        for combatant in [self.player, self.enemy]:
+            combatant.process_effects()
 
     def _post_round_cleanup(self):
         """End-of-round maintenance"""
-        self.player.end_round_cleanup()
-        self.enemy.end_round_cleanup()
+        for combatant in [self.player, self.enemy]:
+            combatant.end_round_cleanup()
 
     # Helper methods
     def _combat_continues(self):
         return not self.player.is_dead and not self.enemy.is_dead
 
     def _validate_dice_selection(self, selections):
+        num_dice = len(self.player.dice)
         return (
             len(selections) > 0 and
-            len(selections) <= len(self.player.dice) and
-            all(1 <= s <= len(self.player.dice) for s in selections)
+            len(selections) <= num_dice and
+            all(1 <= s <= num_dice for s in selections)
         )
 
     def _validate_activation_order(self, order, max_length):
