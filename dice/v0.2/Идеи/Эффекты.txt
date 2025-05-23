@@ -1,0 +1,3 @@
+Freeze: Skip next action (delays enemy turns).
+Weakness: Next damage taken is 50% more.
+Strength: Gain +1 to all face numbers each round (stacks until combat ends).

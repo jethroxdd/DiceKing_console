@@ -1,5 +1,5 @@
 import enum
-from color import *
+from color import Fore, Back, Style
 
 '''
 Order:
@@ -13,11 +13,11 @@ Order:
 '''  
 
 
-@enum.unique
 class EffectType(enum.Enum):
-    hidden = "hidden"
-    burn = f"{RED}burn{RESET}"
-    poison = f"{MAGENTA}poison{RESET}"
+    damage = "hidden"
+    self_damage = "hidden"
+    burn = f"{Fore(202)}горение{Style.RESET_ALL}"
+    poison = f"{Fore(92)}яд{Style.RESET_ALL}"
 
 class BaseEffect:
     def __init__(self, _type, value , duration, order, is_good: bool):
@@ -65,7 +65,17 @@ class Poison(BaseEffect):
 
 class Damage(BaseEffect):
     def __init__(self, value):
-        super().__init__(EffectType.hidden, value=value, duration=0, order=4, is_good=False)
+        super().__init__(EffectType.damage, value=value, duration=0, order=4, is_good=False)
+    
+    def add(self, effect):
+        self.value += effect.value
+        
+    def apply(self, entity):
+        entity.take_damage(self.value)
+
+class SelfDamage(BaseEffect):
+    def __init__(self, value):
+        super().__init__(EffectType.self_damage, value=value, duration=0, order=4, is_good=False)
     
     def add(self, effect):
         self.value += effect.value

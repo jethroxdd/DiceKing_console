@@ -1,10 +1,22 @@
-# Define ANSI escape codes for colors
-BLACK = '\033[30m'       # Black text
-RED = '\033[31m'         # Red text
-GREEN = '\033[32m'       # Green text
-YELLOW = '\033[33m'      # Yellow text
-BLUE = '\033[34m'        # Blue text
-MAGENTA = '\033[35m'     # Magenta text
-CYAN = '\033[36m'        # Cyan text
-WHITE = '\033[37m'       # White text
-RESET = '\033[0m'        # Reset to default color
+
+def Fore(color):
+    return f"\033[38;5;{color}m"
+
+def Back(color):
+    return f"\033[48;5;{color}m"
+
+class Color:
+    '''
+    Text color
+    '''
+    BLACK = 0     
+    RED = 1       
+    GREEN = 2      
+    YELLOW = 3     
+    BLUE = 4      
+    MAGENTA = 5    
+    CYAN = 6      
+    WHITE = 7
+
+class Style:
+    RESET_ALL = '\033[0m'        # Reset to default color

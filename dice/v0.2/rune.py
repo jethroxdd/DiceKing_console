@@ -1,6 +1,6 @@
 import enum
 import effect
-from color import *
+from color import Fore, Back, Style, Color
 
 '''
 Order:
@@ -16,12 +16,14 @@ Order:
 @enum.unique
 class RuneType(enum.Enum):
     empty = f"-"
-    attack = f"{RED}attack{RESET}"
-    shield = f"{CYAN}shield{RESET}"
-    heal = f"{GREEN}heal{RESET}"
-    crit = f"{YELLOW}crit{RESET}"
-    burn = f"{RED}burn{RESET}"
-    poison = f"{MAGENTA}poison{RESET}"
+    attack = f"{Fore(160)}атака{Style.RESET_ALL}"
+    shield = f"{Fore(23)}щит{Style.RESET_ALL}"
+    heal = f"{Fore(40)}лечение{Style.RESET_ALL}"
+    crit = f"{Fore(220)}крит{Style.RESET_ALL}"
+    burn = f"{Fore(202)}жар{Style.RESET_ALL}"
+    leach = f"{Fore(63)}лич{Style.RESET_ALL}"
+    poison = f"{Fore(92)}яд{Style.RESET_ALL}"
+    golden = f"{Fore(220)}золотая{Style.RESET_ALL}"
 
 class BaseRune:
     def __init__(self, _type: RuneType, order, cost, rarity):
@@ -75,12 +77,27 @@ class Burn(BaseRune):
         source.target.add_effect(effect.Damage(value))
         source.target.add_effect(effect.Burn(value))
 
+class Leach(BaseRune):
+    def __init__(self):
+        super().__init__(RuneType.leach, 2, 30, 1)
+        
+    def apply(self, value, source):
+        source.target.add_effect(effect.Damage(value))
+        source.take_heal(value//2)
+
 class Poison(BaseRune):
     def __init__(self):
         super().__init__(RuneType.poison, 2, 20, 1)
         
     def apply(self, value, source):
         source.target.add_effect(effect.Poison(value))
+
+class Golden(BaseRune):
+    def __init__(self):
+        super().__init__(RuneType.golden, 2, 20, 2)
+        
+    def apply(self, value, source):
+        source.gold += value
 
 @enum.unique
 class Runes(enum.Enum):
@@ -90,4 +107,6 @@ class Runes(enum.Enum):
     heal = Heal()
     crit = Crit()
     burn = Burn()
+    leach = Leach()
     poison = Poison()
+    golden = Golden()
