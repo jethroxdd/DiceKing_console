@@ -9,8 +9,7 @@ player = Player(
     50, 
     [
         Simple(6, [Attack()]*6), 
-        Simple(6, [Shield()]*6),
-        Simple(4, [Crit()]*4)
+        Simple(6, [Shield()]*6)
         ]
     )
 gm = GameManager(player)
