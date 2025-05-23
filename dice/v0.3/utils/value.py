@@ -7,8 +7,9 @@ class Value:
     (base_value + sum(base_modifiers)) * product(mult_modifiers) + sum(flat_modifiers)
     """
     
-    def __init__(self, value=None, base=None, mult=None, flat=None):
+    def __init__(self, value=None, base=None, mult=None, flat=None, transform=lambda x: x):
         """Initialize a Value instance from a number, existing Value, or None."""
+        self.transform = transform
         if isinstance(value, (int, float)):
             self._from_number(value, base, mult, flat)
         elif isinstance(value, Value):
@@ -87,21 +88,21 @@ class Value:
         return float(self) >= self._get_comparable(other)
     
     # Arithmetic operators (existing)
-    def __add__(self, other) -> int:
+    def __add__(self, other) -> float:
         """Add this Value to another numeric value."""
-        return int(float(self) + float(other))
+        return self.transform(float(self) + float(other))
 
-    def __radd__(self, other) -> int:
+    def __radd__(self, other) -> float:
         """Handle right-side addition."""
-        return self.__add__(other)
+        return self.transform(self.__add__(other))
 
-    def __sub__(self, other) -> int:
+    def __sub__(self, other) -> float:
         """Subtract another numeric value from this Value."""
-        return int(float(self) - float(other))
+        return self.transform(float(self) - float(other))
 
-    def __rsub__(self, other) -> int:
+    def __rsub__(self, other) -> float:
         """Handle right-side subtraction."""
-        return int(other - float(self))
+        return self.transform(float(other) - float(self))
 
     def __float__(self) -> float:
         """Calculate the effective float value."""
