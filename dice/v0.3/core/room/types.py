@@ -8,6 +8,7 @@ import managers
 from ui import display
 from ui import input
 from random import randint, choice
+from core import Rarity
 
 # Room pools:
 # 1. Standart - shows name of the room
@@ -28,9 +29,9 @@ from random import randint, choice
 # Russian roulette (event) - option to play russian roulette (1/6 chance to win): win - recive legendary item, lose - death (end of run).
 # Cursed chest (chest) - better rarity items, but -5 max HP
 # Museum (event) - option to steal the die (1/6), failure - battle with guard.
-# The Fortune Teller (event) - pay to choose next room (5 options).
-# Hospital - pay for heal or encrease max HP.
-# Sacrifice altar - sacrifice die to encrease max HP (more sides, more max HP)
+# The Fortune Teller (event) - pay to choose next room (from 5 options).
+# Hospital (event) - pay for heal or encrease max HP.
+# Sacrifice altar (event) - sacrifice die to encrease max HP (more sides, more max HP)
 
 class Battle(Room):
     def __init__(self, player, difficulty, *args, **kwargs):
@@ -91,11 +92,30 @@ class HealingSprings(Room):
     def __init__(self, player, difficulty, *args, **kwargs):
         super().__init__("Healing Springs", "Restore full health", player, difficulty)
     
-    
     def enter(self):
-        display.H2("Chest")
+        display.H2("Event room")
         display.success("Your health is full.")
         self.player.health = self.player.max_health
+
+class GoldMinecart(Room):
+    def __init__(self, player, difficulty, *args, **kwargs):
+        super().__init__("Minecart with gold", "Minecart with gold", player, difficulty)
+    
+    def enter(self):
+        display.H2("Event room")
+        gold = int(randint(10, 100)*self.difficulty**(0.1)+10)
+        display.message(f"Your found {gold} gold in the abandoned minecart")
+        self.player.gold += gold
+
+class Trap(Room):
+    def __init__(self, player, difficulty, *args, **kwargs):
+        super().__init__("Trap", "Take some damage", player, difficulty)
+    
+    def enter(self):
+        display.H2("Event room")
+        damage = int(randint(0, int(self.player.max_health*0.3)) + 5)
+        display.message(f"Your fell into the trap. Recive {damage} damage")
+        self.player.take_damage(damage)
 
 class Chest(Room):
     
@@ -147,6 +167,6 @@ class Boss(Battle):
         super().enter(title="Boss Battle")
         
 
-STANDARD_POOL = [Battle, Shop, ]
-EVENT_POOL = [HealingSprings]
+STANDARD_POOL = [Battle, Shop, ModificationRoom]
+EVENT_POOL = [HealingSprings, GoldMinecart, Trap]
 CHEST_POOL = [Chest]

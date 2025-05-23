@@ -1,5 +1,5 @@
 class Rarity:
-    ordinary = 4
-    rare = 3
-    epic = 2
-    legendary = 1
+    COMMON = 5
+    RARE = 3
+    EPIC = 2
+    LEGENDARY = 1

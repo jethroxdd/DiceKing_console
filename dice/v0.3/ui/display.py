@@ -10,8 +10,8 @@ def success(text):
 def warning(text):
         print(Paint(text, Color.WARNING))
 
-def message(text):
-        print(Paint(text, Color.UI))
+def message(text, color=Color.UI):
+        print(Paint(text, color))
 
 def H1(text: str):
         width = len_without_color(text)
@@ -24,11 +24,11 @@ def H2(text):
         message(f"=== {text} ===\n")
 
 def frame_text(text: list, title="", min_width=0):
-        width = len(title)
+        width = len_without_color(title)
         for line in text:
                 width = max(width, len_without_color(line))
         width = max(width, min_width)
-        message(f"┌{title}{"─"*(width-len(title))}──┐")
+        message(f"┌{title}{"─"*(width-len_without_color(title))}──┐")
         for line in text:
                 padding = " "*(width-len_without_color(line))
                 print(Paint("│ ", Color.UI) + line + Paint(f"{padding} │", Color.UI))
@@ -86,12 +86,12 @@ def options(options: list):
 
 def game_title():
         print("")
-        print("\t\t████████▄   ▄█   ▄████████    ▄████████         ▄█   ▄█▄  ▄█  ███▄▄▄▄      ▄██████▄  ")
-        print("\t\t███   ▀███ ███  ███    ███   ███    ███        ███ ▄███▀ ███  ███▀▀▀██▄   ███    ███ ")
-        print("\t\t███    ███ ███▌ ███    █▀    ███    █▀         ███▐██▀   ███▌ ███   ███   ███    █▀  ")
-        print("\t\t███    ███ ███▌ ███         ▄███▄▄▄           ▄█████▀    ███▌ ███   ███  ▄███        ")
-        print("\t\t███    ███ ███▌ ███        ▀▀███▀▀▀          ▀▀█████▄    ███▌ ███   ███ ▀▀███ ████▄  ")
-        print("\t\t███    ███ ███  ███    █▄    ███    █▄         ███▐██▄   ███  ███   ███   ███    ███ ")
-        print("\t\t███   ▄███ ███  ███    ███   ███    ███        ██  ▀███▄ ███  ███   ███   ███    ███ ")
-        print("\t\t████████▀  █▀   ████████▀    ██████████        █▀    ▀█▀ █▀    ▀█   █▀    ████████▀  ")
+        print(" ████████▄   ▄█   ▄████████    ▄████████         ▄█   ▄█▄  ▄█  ███▄▄▄▄      ▄██████▄  ")
+        print(" ███   ▀███ ███  ███    ███   ███    ███        ███ ▄███▀ ███  ███▀▀▀██▄   ███    ███ ")
+        print(" ███    ███ ███▌ ███    █▀    ███    █▀         ███▐██▀   ███▌ ███   ███   ███    █▀  ")
+        print(" ███    ███ ███▌ ███         ▄███▄▄▄           ▄█████▀    ███▌ ███   ███  ▄███        ")
+        print(" ███    ███ ███▌ ███        ▀▀███▀▀▀          ▀▀█████▄    ███▌ ███   ███ ▀▀███ ████▄  ")
+        print(" ███    ███ ███  ███    █▄    ███    █▄         ███▐██▄   ███  ███   ███   ███    ███ ")
+        print(" ███   ▄███ ███  ███    ███   ███    ███        ██  ▀███▄ ███  ███   ███   ███    ███ ")
+        print(" ████████▀  █▀   ████████▀    ██████████        █▀    ▀█▀ █▀    ▀█   █▀    ████████▀  ")
         print("")

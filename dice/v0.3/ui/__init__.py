@@ -1,2 +1,2 @@
 from .input import *
-from .color import Paint
+from .color import *

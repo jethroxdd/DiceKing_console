@@ -106,7 +106,7 @@ class ModificationManager:
 
     def _select_face(self, die):
         options = [str(r) for r in die.runes]
-        return select_from_list(options, f"{die} faces:", "Choose face ('Enter' to exit): ", default=False)
+        return select_from_list(options, f"{die.name} faces:", "Choose face ('Enter' to exit): ", default=False)
     
     
     def _select_faces(self, die):

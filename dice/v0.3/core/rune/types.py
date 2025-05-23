@@ -1,78 +1,103 @@
-from core.rune import BaseRune
+from core.rune import RunePriority, BaseRune
 import core.effect.types as EffectTypes
 from ui.color import Paint, Color
 from core import Rarity
-'''
-Order:
-0 - utility
-1 - shield
-2 - effect
-3 - self damage
-4 - damage
-'''
 
 class Empty(BaseRune):
+    name = "-"
+    priority = RunePriority.UTILITY
     cost = 0
     rarity = 0
-    def __init__(self):
-        super().__init__("empty", 0)
+    color = Color.EMPTY
     
-    def apply(self, value, source, target, roll_results):
+    def apply(self, *args):
         pass
-    
-    def __str__(self):
-        return Paint("empty", Color.EMPTY)
 
 class Attack(BaseRune):
+    name = "attack"
+    priority = RunePriority.DAMAGE
     cost = 10
-    rarity = Rarity.ordinary
-    def __init__(self):
-        super().__init__("attack", 4)
-    
-    def apply(self, value, source, target, roll_results):
+    rarity = Rarity.COMMON
+    color = Color.ATTACK
+
+    def apply(self, value, source, target, roll_results, index):
         target.take_damage(value)
-    
-    def __str__(self):
-        return Paint("attack", Color.ATTACK)
 
 class Shield(BaseRune):
+    name = "shield"
+    priority = RunePriority.SHIELD
     cost = 10
-    rarity = Rarity.ordinary
-    def __init__(self):
-        super().__init__("shield", 1)
-    
-    def apply(self, value, source, target, roll_results):
-        source.take_shield(value)
-        
-    def __str__(self):
-        return Paint("shield", Color.SHIELD)
+    rarity = Rarity.COMMON
+    color = Color.SHIELD
+
+    def apply(self, value, source, target, roll_results, index):
+        source.add_shield(value)
 
 class Fire(BaseRune):
+    name = "fire"
+    priority = RunePriority.DAMAGE
     cost = 40
-    rarity = Rarity.epic
-    def __init__(self):
-        super().__init__("fire", 1)
+    rarity = Rarity.EPIC
+    color = Color.FIRE
     
-    def apply(self, value, source, target, roll_results):
-        target.take_damage(value)
+    def apply(self, value, source, target, roll_results, index):
+        target.take_damage(value//2)
         target.add_effect(EffectTypes.Burn(value))
-        
-    def __str__(self):
-        return Paint("fire", Color.FIRE)
 
 class Crit(BaseRune):
+    name = "crit"
+    priority = RunePriority.UTILITY
     cost = 50
-    rarity = Rarity.legendary
-    def __init__(self):
-        super().__init__("crit", 0)
+    rarity = Rarity.LEGENDARY
+    color = Color.CRIT
     
-    def apply(self, value, source, target, roll_results):
-        for result in roll_results:
-            result.value_mult_mods += [2]
+    def apply(self, value, source, target, roll_results, index):
+        for result in roll_results[index:]:
+            result.value.add_mult(2)
+
+class Heal(BaseRune):
+    name = "heal"
+    priority = RunePriority.EFFECT
+    cost = 50
+    rarity = Rarity.EPIC
+    color = Color.HEAL
+    
+    def apply(self, value, source, target, roll_results, index):
+        source.take_heal(value)
+
+class Rage(BaseRune):
+    name = "rage"
+    priority = RunePriority.UTILITY
+    cost = 40
+    rarity = Rarity.EPIC
+    color = Color.RAGE
+    power = 2
+    
+    def apply(self, value, source, target, roll_results, index):
+        target.take_damage(value+self.power)
+        source.take_self_damage(self.power)
         
     def __str__(self):
-        return Paint("crit", Color.CRIT)
+        return Paint("rage", Color.RAGE)
+
+class Mirror(BaseRune):
+    name = "rage"
+    priority = RunePriority.UTILITY
+    cost = 40
+    rarity = Rarity.LEGENDARY
+    color = Color.RAGE
+    
+    def apply(self, value, source, target, roll_results, index):
+        if index == 0:
+            return
+        roll_results[index].rune = roll_results[index-1].rune
+        roll_results[index].apply(roll_results, index)
+        
+    def __str__(self):
+        return Paint("mirror", Color.MIRROR)
+
+
     
     
-SHOP_POOL_RUNES = [Attack, Shield, Crit, Fire]
+SHOP_POOL_RUNES = [Attack, Shield, Crit, Fire, Heal, Mirror, Rage]
 CHEST_POOL_RUNES = SHOP_POOL_RUNES

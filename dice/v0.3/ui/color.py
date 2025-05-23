@@ -35,6 +35,9 @@ class Color:
     SHIELD = 26
     FIRE = 166
     CRIT = 214
+    HEAL = 34
+    RAGE = 124
+    MIRROR = 75
     
 class Style:
     RESET_ALL = '\033[0m'        # Reset to default color

@@ -113,7 +113,7 @@ class ShopManager:
             self.player.gold += int(0.9*self.player.runes[item_id].cost)
             del self.player.runes[item_id]
             return
-        for i, _ in enumerate(self.player.dice):
+        for i, _ in enumerate(self.player.dice[item_id].runes):
             self.player.gold += int(0.9*self.player.dice[item_id].runes[i].cost)
         self.player.gold += int(0.9*self.player.dice[item_id].cost)
         del self.player.dice[item_id]

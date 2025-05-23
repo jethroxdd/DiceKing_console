@@ -23,7 +23,6 @@ class RoomManager:
         options = []
         for _ in range(3):
             enemy = choice(EnemyPools.stage[current_stage-1])(difficulty)
-            # room_type = choice(RoomPools.types)
             room_type = choice(RoomPools.types)
             room = choice(getattr(RoomPools, room_type))(self.player, difficulty, enemy=enemy)
             options += [[room, room_type]]

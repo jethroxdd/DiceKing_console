@@ -1,28 +1,25 @@
-from ui.color import Paint
-from core.effect import BaseEffect
-
-'''
-Order:
-0 - good
-1 - bad
-'''
+from ui.color import Paint, Color
+from core.effect import BaseEffect, EffectPriority
 
 class Burn(BaseEffect):
-    def __init__(self, duration):
-        super().__init__("burn", 1, duration, 1)
+    name = "burn"
+    value = 0
+    duration = 0
+    priority = EffectPriority.BAD
+    color = Color.FIRE
     
     @property
     def is_ended(self):
         return self.duration <= 0
     
     def apply(self, source):
-        source.take_true_damage(self.value)
-    
-    def add(self, effect):
+        return source.take_true_damage(self.value)
+        
+    def stack(self, effect):
         self.duration += effect.duration
+        return self.duration
     
     def tick(self):
         self.duration = max(0, self.duration - 1)
+        return self.is_ended
 
-    def __str__(self):
-        return f"{Paint("burn", 214)}[{self.value}|{self.duration}]"

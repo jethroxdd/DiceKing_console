@@ -8,16 +8,21 @@ class Player(Entity):
         self.artifacts = []
         self.runes = []
         self.max_active_dice_amount = 5
-        self.max_rerols = 1
-        self.used_rerols = 0
+        self.max_rerolls = 1
+        self.used_rerolls = 0
         self.init_signals()
     
     def init_signals(self):
         self._on_shield_broke = Signal(self)
+        self._on_self_damage = Signal(self)
     
     @property
     def is_alive(self):
         return self.health > 0
+    
+    @property
+    def rerolls(self):
+        return self.max_rerolls - self.used_rerolls
     
     def take_damage(self, damage):
         shield_broke = self.shield - max(0, self.shield-damage)
@@ -25,6 +30,10 @@ class Player(Entity):
             self._on_shield_broke.emit(shield_broke)
         
         super().take_damage(damage)
+    
+    def take_self_damage(self, damage):
+        self._on_self_damage.emit(damage)
+        super().take_self_damage(damage)
     
     def add_artifact(self, artifact):
         for a in self.artifacts:
@@ -42,9 +51,6 @@ class Player(Entity):
     
     def remove_rune(self, rune_id):
         del self.runes[rune_id]
-    
-    def get_available_rerolls(self):
-        return self.max_rerols - self.used_rerols
     
     def end_round_cleanup(self):
         super().end_round_cleanup()
