@@ -1,6 +1,7 @@
+from core import PoolType
 from core.entity import Entity
 from core.die.types import Simple
-from core.rune.types import Attack, Shield
+import core.rune.types as RuneTypes
 from random import shuffle
 class Enemy(Entity):
     def __init__(self, name="Enemy", health=None, dice=None):
@@ -23,8 +24,8 @@ class Rat(Enemy):
             "Rat",
             10 + 4*level, 
             [
-                Simple(4, [Shield()]*3 + [Attack()]*1), 
-                Simple(4, [Shield()]*3 + [Attack()]*1)
+                Simple(4, [RuneTypes.Shield()]*2 + [RuneTypes.Attack()]*1 + [RuneTypes.Empty()]), 
+                Simple(4, [RuneTypes.Shield()]*2 + [RuneTypes.Attack()]*1 + [RuneTypes.Empty()])
                 ]
             )
 
@@ -34,8 +35,8 @@ class Slime(Enemy):
             "Slime", 
             10 + 4*level, 
             [
-                Simple(4, [Attack()]*3 + [Shield()]*1),
-                Simple(4, [Attack()]*3 + [Shield()]*1)
+                Simple(4, [RuneTypes.Attack()]*2 + [RuneTypes.Shield()]*1 + [RuneTypes.Empty()]),
+                Simple(4, [RuneTypes.Attack()]*2 + [RuneTypes.Shield()]*1 + [RuneTypes.Empty()])
                 ]
             )
 
@@ -45,8 +46,8 @@ class Boss(Enemy):
             "BOSS",
             20 + 10*level, 
             [
-                Simple(4, [Shield()]*3 + [Attack()]*1), 
-                Simple(4, [Shield()]*3 + [Attack()]*1)
+                Simple(6, [RuneTypes.Crit()]*1 + [RuneTypes.Shield()]*1 + [RuneTypes.Shield()]*2 + [RuneTypes.Empty()]*1), 
+                Simple(6, [RuneTypes.Crit()]*1 + [RuneTypes.Attack()]*1 + [RuneTypes.Attack()]*2 + [RuneTypes.Empty()]*1)
                 ]
             )
 
@@ -56,10 +57,11 @@ STAGE_3_POOL = [Rat, Slime]
 STAGE_4_POOL = [Rat, Slime]
 STAGE_5_POOL = [Rat, Slime]
 
-ENEMY_POOL = [
-    STAGE_1_POOL,
-    STAGE_2_POOL,
-    STAGE_3_POOL,
-    STAGE_4_POOL,
-    STAGE_5_POOL
-]
+ENEMY_POOL = {
+    PoolType.ALL: [Rat, Slime],
+    0: [Rat, Slime],
+    2: [Rat, Slime],
+    3: [Rat, Slime],
+    4: [Rat, Slime],
+    5: [Rat, Slime]
+}

@@ -1,4 +1,5 @@
 from enum import Enum
+from core.rune.types import Empty
 from ui import display
 from ui import select_from_list, get_valid_input
 
@@ -66,12 +67,12 @@ class ModificationManager:
 
     def attach_rune(self, die, rune, face_id: int):
         _rune = die.attach_rune(rune, face_id)
-        if _rune.name == "empty":
+        if isinstance(_rune, Empty):
             display.success(f"Attached {rune} rune to the {face_id+1} side")
         else:
             display.success(f"Replaced {_rune} with {rune} at {face_id+1} side")
             self.player.add_rune(_rune)
-        self.player.remove_rune_by_value(rune)
+        self.player.remove_rune(rune)
         return ModificationResult.SUCCESS
     
     def _remove_rune_flow(self):
@@ -85,7 +86,7 @@ class ModificationManager:
     def remove_rune(self, die, face_ids: int):
         for face_id in face_ids: 
             _rune = die.remove_rune(face_id-1)
-            if _rune.name == "empty":
+            if isinstance(_rune, Empty):
                 continue
             self.player.add_rune(_rune)
     

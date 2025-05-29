@@ -7,7 +7,7 @@ class RollResult:
     
     def __init__(self, rune, value, raw, source, target):
         self.rune = rune
-        self.value = Value(value)
+        self.value = Value(value, transform=int)
         self.raw = raw
         self.source = source
         self.target = target
@@ -60,8 +60,8 @@ class CombatManager:
         self.current_round = 0
         
         # Initialize targeting
-        self.player.set_target(self.enemy)
-        self.enemy.set_target(self.player)
+        self.player.target = self.enemy
+        self.enemy.target = self.player
 
     def battle(self):
         """Main battle loop"""
@@ -130,7 +130,7 @@ class CombatManager:
 
     def _handle_rerolls(self, results: RollResults):
         """Manage reroll mechanics"""
-        remaining_rerolls = self.player.rerolls
+        remaining_rerolls = self.player.remaining_rerolls
         
         while remaining_rerolls > 0:
             selection = get_valid_input(
@@ -188,7 +188,7 @@ class CombatManager:
 
     # Helper methods
     def _combat_continues(self):
-        return not self.player.is_dead and not self.enemy.is_dead
+        return self.player.is_alive and self.enemy.is_alive
 
     def _validate_dice_selection(self, selections):
         num_dice = len(self.player.dice)

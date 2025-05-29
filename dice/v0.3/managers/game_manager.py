@@ -1,4 +1,5 @@
 from managers import RoomManager
+from core import PoolType
 from ui import display
 from ui import input
 
@@ -35,7 +36,6 @@ class GameManager:
         # Получение вариантов комнат
         room_options = self.room_manager.get_room_options(
             current_stage=self.stage,
-            current_room=self.room,
             difficulty=self.difficulty
         )
         
@@ -58,10 +58,12 @@ class GameManager:
     
     def _choose_room(self, room_options: list):
         options = []
-        for room, room_type in room_options:
-            if room_type == "event":
+        for room_option in room_options:
+            room = room_option.room
+            room_type = room_option.type
+            if room_type is PoolType.EVENT:
                 options += ["Event"]
-            elif room_type == "chest":
+            elif room_type is PoolType.CHEST:
                 options += ["Chest"]
             else:
                 options += [str(room.name)]

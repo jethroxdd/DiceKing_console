@@ -1,37 +1,57 @@
-from random import choice
-from core.room.types import STANDARD_POOL, EVENT_POOL, CHEST_POOL, Battle, ModificationRoom, Boss
+import random
+from enum import Enum
+from typing import List, NamedTuple
+from core.room.types import ROOM_POOLS, ModificationRoom, BossBattle
 from core.entity.enemy import ENEMY_POOL
-import enum
+from core import PoolType
 
-# Generate rooms to choose from
-# Enter room
+class RoomType(Enum):
+    """Enum representing valid room types."""
+    STANDARD = PoolType.STANDARD
+    BATTLE = PoolType.BATTLE
+    EVENT = PoolType.EVENT
+    CHEST = PoolType.CHEST
 
-class RoomPools:
-    types = ["standard", "event", "chest"]
-    standard = STANDARD_POOL
-    event = EVENT_POOL
-    chest = CHEST_POOL
-
-class EnemyPools:
-    stage = ENEMY_POOL
+class RoomOption(NamedTuple):
+    """Data structure representing a room choice with metadata."""
+    room: object
+    type: str  # Using string value for backward compatibility
 
 class RoomManager:
+    """Manages room generation and special room interactions."""
+    # Weighted room type configuration (Standard: 6, Event: 3, Chest: 1)
+    ROOM_TYPE_CHOICES = [RoomType.STANDARD, RoomType.BATTLE, RoomType.EVENT, RoomType.CHEST]
+    ROOM_TYPE_WEIGHTS = [2, 10, 3, 1]
+    
     def __init__(self, player):
         self.player = player
     
-    def get_room_options(self, current_stage, current_room, difficulty):
+    def get_room_options(self, current_stage: int, difficulty: int, n=3) -> List[RoomOption]:
+        """Generate three weighted random room options for player selection."""
+        # Select three room types using weighted probabilities
+        chosen_types = random.choices(
+            self.ROOM_TYPE_CHOICES, 
+            weights=self.ROOM_TYPE_WEIGHTS, 
+            k=n
+        )
+        
         options = []
-        for _ in range(3):
-            enemy = choice(EnemyPools.stage[current_stage-1])(difficulty)
-            room_type = choice(RoomPools.types)
-            room = choice(getattr(RoomPools, room_type))(self.player, difficulty, enemy=enemy)
-            options += [[room, room_type]]
+        for room_type_enum in chosen_types:            
+            room_type_value = room_type_enum.value
+            room = self._create_room(room_type_value, difficulty)
+            options.append(RoomOption(room, room_type_value))
+        
         return options
     
-    def boss_battle(self, current_stage, difficulty):
-        room = Boss(self.player, difficulty)
-        room.enter()
+    def boss_battle(self, current_stage: int, difficulty: int) -> None:
+        """Initiate a boss battle room."""
+        BossBattle(self.player, difficulty).enter()
     
-    def modification_menu(self):
-        mod_room = ModificationRoom(self.player, 1)
-        mod_room.enter()
+    def modification_menu(self) -> None:
+        """Open the modification menu room."""
+        ModificationRoom(self.player, 1).enter()
+    
+    def _create_room(self, room_type: RoomType, difficulty: int) -> object:
+        """Instantiate a room of specified type with generated enemy."""
+        room_class = random.choice(ROOM_POOLS[room_type])
+        return room_class(self.player, difficulty)

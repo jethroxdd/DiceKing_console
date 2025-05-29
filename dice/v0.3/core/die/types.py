@@ -1,10 +1,14 @@
 from core.die import Die
-from core import Rarity
+from core import RarityType, PoolType
 
 class Simple(Die):
-    rarity = Rarity.COMMON
+    rarity = RarityType.COMMON
+    _name = "simple"
     def __init__(self, sides, runes=None, upgrades=None):
-        super().__init__("simple", sides, runes, upgrades)
+        super().__init__(sides, runes, upgrades)
 
-SHOP_POOL_DICE = [Simple]
-CHEST_POOL_DICE = SHOP_POOL_DICE
+
+DICE_POOLS = {
+    PoolType.SHOP: [Simple],
+    PoolType.CHEST: [Simple]
+}

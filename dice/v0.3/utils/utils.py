@@ -1,4 +1,4 @@
-from random import choices
+from random import choice, choices
 import re
 
 def len_without_color(text):
@@ -13,17 +13,19 @@ def len_without_color(text):
         length -= len(f) + 3
     return length
 
-def random_items_from_pool(pool, k=1):
-    return choices(pool, weights=[i.rarity for i in pool], k=k)[0]
+def random_items_from_pool(pool, waighted=False, k=1):
+    if waighted:
+        return choices(pool, weights=[i.rarity.value for i in pool], k=k)[0:k-1]
+    else:
+        return choice(pool)
 
 class Signal:
-    def __init__(self, player):
-        self.player = player
-        self.functions = []
-    
-    def add(self, func):
-        self.functions += [func]
-    
+    def __init__(self):
+        self._callbacks = []
+
+    def connect(self, callback):
+        self._callbacks.append(callback)
+
     def emit(self, *args, **kwargs):
-        for fun in self.functions:
-            fun(*args, **kwargs)
+        for callback in self._callbacks:
+            callback(*args, **kwargs)

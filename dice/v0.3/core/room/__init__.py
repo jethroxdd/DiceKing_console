@@ -4,3 +4,6 @@ class Room:
         self.description = description
         self.player = player
         self.difficulty = difficulty
+    
+    def enter(self):
+        pass

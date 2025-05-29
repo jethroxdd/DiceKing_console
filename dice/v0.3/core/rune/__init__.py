@@ -1,7 +1,7 @@
 from enum import IntEnum
 from ui.color import Color
 from ui.display import Paint
-from core import Rarity
+from core import RarityType
 
 class RunePriority(IntEnum):
     UTILITY = 0
@@ -14,8 +14,11 @@ class BaseRune:
     name = "base_rune"
     priority = RunePriority.UTILITY
     cost = 0
-    rarity = Rarity.COMMON
+    rarity = RarityType.COMMON
     color = Color.WHITE
+    
+    def __init__(self, *args):
+        pass
     
     def apply(self, value: int, source, target, roll_results: list, index: int):
         raise NotImplementedError

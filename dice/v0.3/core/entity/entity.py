@@ -5,16 +5,37 @@ class Entity:
         self.health = health
         self.dice = dice
         
-        self.gold = gold
+        self._gold = gold
         self.max_shield = max_shield
         self.shield = 0
-        self.target = None
+        self._target = None
         self.effects = []
     
     @property
-    def is_dead(self):
-        """Returns True if the entity's health is 0 or below"""
-        return self.health <= 0
+    def is_alive(self):
+        """Improved property name for boolean state"""
+        return self.health > 0
+    
+    @property
+    def gold(self):
+        return self._gold
+    
+    @gold.setter
+    def gold(self, gold):
+        if gold <= 0:
+            raise ValueError("Gold must be positive")
+        self._gold = gold
+    
+    @property
+    def target(self):
+        return self._target
+    
+    @target.setter
+    def target(self, target):
+        """Set combat target"""
+        if not isinstance(target, (Entity)):
+            raise ValueError("Target must be Entity")
+        self._target = target
     
     def take_damage(self, damage):
         """Apply damage through shields, returns actual damage taken"""
@@ -51,14 +72,9 @@ class Entity:
         shield_added = min(amount, self.max_shield - self.shield)
         self.shield += shield_added
         return shield_added
-
-    def set_target(self, target):
-        """Set combat target"""
-        self.target = target
     
     def end_round_cleanup(self):
         """Round-end maintenance"""
-        # Tick shield
         self.shield = max(0, self.shield - 1)
         
     def process_effects(self):
