@@ -1,2 +1,2 @@
-Simple console version of my game.
+Simple console version of my game.<br>
 Requires enabling colors in terminal.
